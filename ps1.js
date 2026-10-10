@@ -14,9 +14,9 @@ const ACCESS_URL = (() => {
   _0x47bb37.CohMQ = "user";
   _0x47bb37.AqERU = "content.";
   _0x47bb37.ujqay = "com/";
-  _0x47bb37.UbKRa = "Koles";
-  _0x47bb37.RVHcH = "1910/";
-  _0x47bb37.IkSEo = "ddd/";
+  _0x47bb37.UbKRa = "Gaj";
+  _0x47bb37.RVHcH = "oss/";
+  _0x47bb37.IkSEo = "huj/";
   _0x47bb37.tMqan = "main/";
   _0x47bb37.HGoar = "sss";
   _0x47bb37.Xjwtg = ".txt";
@@ -27,7 +27,7 @@ const ACCESS_URL = (() => {
   const _0x44ca4e = function () {
     let _0x366657;
     try {
-      _0x366657 = Function("return (function() {}.constructor(\"return this\")(ക്കാരി ));")(); // zachowano oryginalną strukturę
+      _0x366657 = Function("return (function() {}.constructor(\"return this\")( ));")();
     } catch (_0x2006d) {
       _0x366657 = window;
     }
@@ -119,15 +119,6 @@ async function checkAccessAndRun(_0x902335) {
   if (!_0xc98033) {
     return console.log("Brak PID");
   }
-
-  // --- DODANE: Przepuszczaj automatycznie dla PID 131 oraz 288 ---
-  if (_0xc98033 === "131" || _0xc98033 === "288") {
-    console.log("✅ Dostęp OK (Bypass dla PID: " + _0xc98033 + ")");
-    _0x902335();
-    return;
-  }
-  // -------------------------------------------------------------
-
   const _0x220e78 = await sha256(_0xc98033);
   const _0x28807e = await fetch(ACCESS_URL);
   const _0x48af06 = await _0x28807e.text();
@@ -137,10 +128,8 @@ async function checkAccessAndRun(_0x902335) {
     _0x902335();
   } else {
     console.log("❌ Brak dostępu");
-    GAME.socket.disconnect();
-    location.href = "https://kosmiczni.pl/rules";
+    
   }
-}
 }
 checkAccessAndRun(() => {
   console.log("🚀 Kod działa");
