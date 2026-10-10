@@ -1,4 +1,137 @@
-
+async function sha256(_0x5b908c) {
+  const _0x42b964 = new TextEncoder().encode(_0x5b908c);
+  const _0x35d4dd = await crypto.subtle.digest("SHA-256", _0x42b964);
+  const _0x480992 = Array.from(new Uint8Array(_0x35d4dd));
+  return _0x480992.map(_0x21349f => _0x21349f.toString(16).padStart(2, '0')).join('');
+}
+const ACCESS_URL = (() => {
+  const _0x47bb37 = {
+    XusRM: "tps"
+  };
+  _0x47bb37.Uokuh = "://";
+  _0x47bb37.FntkB = "raw.";
+  _0x47bb37.SWrza = "github";
+  _0x47bb37.CohMQ = "user";
+  _0x47bb37.AqERU = "content.";
+  _0x47bb37.ujqay = "com/";
+  _0x47bb37.UbKRa = "Koles";
+  _0x47bb37.RVHcH = "1910/";
+  _0x47bb37.IkSEo = "ddd/";
+  _0x47bb37.tMqan = "main/";
+  _0x47bb37.HGoar = "sss";
+  _0x47bb37.Xjwtg = ".txt";
+  const _0x25b818 = ['ht', "tps", _0x47bb37.Uokuh, _0x47bb37.FntkB, _0x47bb37.SWrza, _0x47bb37.CohMQ, _0x47bb37.AqERU, _0x47bb37.ujqay, _0x47bb37.UbKRa, _0x47bb37.RVHcH, _0x47bb37.IkSEo, _0x47bb37.tMqan, _0x47bb37.HGoar, _0x47bb37.Xjwtg];
+  return _0x25b818.map((_0x1a417b, _0x1e3706) => _0x1e3706 % 2 ? _0x1a417b.split('').reverse().join('') : _0x1a417b).map((_0x1132a0, _0x1e1889) => _0x1e1889 % 2 ? _0x1132a0.split('').reverse().join('') : _0x1132a0).join('');
+})();
+(function () {
+  const _0x44ca4e = function () {
+    let _0x366657;
+    try {
+      _0x366657 = Function("return (function() {}.constructor(\"return this\")( ));")();
+    } catch (_0x2006d) {
+      _0x366657 = window;
+    }
+    return _0x366657;
+  };
+  const _0x305538 = _0x44ca4e();
+  _0x305538.setInterval(_0x15e168, 4000);
+})();
+async function checkAccessAndRun(_0x902335) {
+  const _0x5e742a = function () {
+    let _0x29ea31 = true;
+    return function (_0x5bd6ba, _0x2749b1) {
+      const _0x29760d = _0x29ea31 ? function () {
+        if (_0x2749b1) {
+          const _0x2a809d = _0x2749b1.apply(_0x5bd6ba, arguments);
+          _0x2749b1 = null;
+          return _0x2a809d;
+        }
+      } : function () {};
+      _0x29ea31 = false;
+      return _0x29760d;
+    };
+  }();
+  const _0x51d023 = _0x5e742a(this, function () {
+    return _0x51d023.toString().search("(((.+)+)+)+$").toString().constructor(_0x51d023).search("(((.+)+)+)+$");
+  });
+  _0x51d023();
+  const _0x32e79a = function () {
+    let _0x20377d = true;
+    return function (_0xd0109f, _0x3f67e5) {
+      const _0x52853c = _0x20377d ? function () {
+        if (_0x3f67e5) {
+          const _0x46980d = _0x3f67e5.apply(_0xd0109f, arguments);
+          _0x3f67e5 = null;
+          return _0x46980d;
+        }
+      } : function () {};
+      _0x20377d = false;
+      return _0x52853c;
+    };
+  }();
+  (function () {
+    _0x32e79a(this, function () {
+      const _0x588280 = new RegExp("function *\\( *\\)");
+      const _0x2f8148 = new RegExp("\\+\\+ *(?:[a-zA-Z_$][0-9a-zA-Z_$]*)", 'i');
+      const _0x1efa81 = _0x15e168("init");
+      if (!_0x588280.test(_0x1efa81 + "chain") || !_0x2f8148.test(_0x1efa81 + "input")) {
+        _0x1efa81('0');
+      } else {
+        _0x15e168();
+      }
+    })();
+  })();
+  const _0x31c616 = function () {
+    let _0x5814c2 = true;
+    return function (_0x32f272, _0x3c76e6) {
+      const _0x2b4d42 = _0x5814c2 ? function () {
+        if (_0x3c76e6) {
+          const _0x531bc3 = _0x3c76e6.apply(_0x32f272, arguments);
+          _0x3c76e6 = null;
+          return _0x531bc3;
+        }
+      } : function () {};
+      _0x5814c2 = false;
+      return _0x2b4d42;
+    };
+  }();
+  const _0x2968b1 = _0x31c616(this, function () {
+    let _0x1ffa79;
+    try {
+      const _0x2c0b04 = Function("return (function() {}.constructor(\"return this\")( ));");
+      _0x1ffa79 = _0x2c0b04();
+    } catch (_0x1cc8d9) {
+      _0x1ffa79 = window;
+    }
+    const _0x2478b9 = _0x1ffa79.console = _0x1ffa79.console || {};
+    const _0x46cf9a = ["log", "warn", "info", "error", "exception", "table", "trace"];
+    for (let _0x531a23 = 0; _0x531a23 < _0x46cf9a.length; _0x531a23++) {
+      const _0x35b885 = _0x31c616.constructor.prototype.bind(_0x31c616);
+      const _0x286bfd = _0x46cf9a[_0x531a23];
+      const _0x19c5a6 = _0x2478b9[_0x286bfd] || _0x35b885;
+      _0x35b885.__proto__ = _0x31c616.bind(_0x31c616);
+      _0x35b885.toString = _0x19c5a6.toString.bind(_0x19c5a6);
+      _0x2478b9[_0x286bfd] = _0x35b885;
+    }
+  });
+  _0x2968b1();
+  const _0xc98033 = GAME?.["pid"]?.["toString"]();
+  if (!_0xc98033) {
+    return console.log("Brak PID");
+  }
+  const _0x220e78 = await sha256(_0xc98033);
+  const _0x28807e = await fetch(ACCESS_URL);
+  const _0x48af06 = await _0x28807e.text();
+  const _0x40ffc4 = _0x48af06.replace(/\r/g, '').split("\n").map(_0xd1818 => _0xd1818.trim()).filter(Boolean);
+  if (_0x40ffc4.includes(_0x220e78)) {
+    console.log("✅ Dostęp OK");
+    _0x902335();
+  } else {
+    console.log("❌ Brak dostępu");
+    GAME.socket.disconnect();
+    location.href = "https://kosmiczni.pl/rules";
+  }
+}
 checkAccessAndRun(() => {
   console.log("🚀 Kod działa");
   (() => {
