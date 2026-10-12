@@ -1,21 +1,7 @@
 var checked = false;
 var latency = -1;
 const links = {
-    "link":"",
-    "link0":"",
-    "link1":"",
-    "link2":"",
-    "link3":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/riddles.json",
-    "link4":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/ps1.js",
-    "link5":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/load.js",
-    "link6":"https://raw.githubusercontent.com/Gajoss/huj/main/ekwipunek.js",
-     "link7":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/ddd.js"
-    "link8":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/sssx3.js"
-   "link9":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/uuux3.js"
-"link10":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/dupablada123.js"
-"link11":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/connectionManager.js"
-"link12":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/save.js"
-"link13":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/ps.js"
+    "link":"https://raw.githubusercontent.com/Gajoss/huj/refs/heads/main/connectionManager.js",
  };
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
