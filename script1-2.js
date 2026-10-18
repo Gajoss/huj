@@ -1,7 +1,7 @@
 var checked = false;
 var latency = -1;
 const links = {
-    "link":"https://raw.githubusercontent.com/Gajoss/huj/mains/ddd.js",
+    "link":"https://raw.githubusercontent.com/Gajoss/huj/main/ddd.js",
  };
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
