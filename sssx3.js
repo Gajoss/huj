@@ -1,21 +1,10 @@
-/**
- * Script Name: SSSX3 Game Assistant / Automation Tool
- * Original Version: 3.7.4
- * Un-obfuscated & De-anonymized Code Version
- *
- * Description:
- * Tento skrypt automatyzuje rozgrywkę w grach opartych na silniku Kosmicznego Wojownika / DB (np. MOC).
- * Zawiera systemy botujące (Arena, Wyprawy, Otchłań, Instancje), zestaw skrótów klawiszowych,
- * interfejs UI ze statystykami EXP/H, automatyczne odpisywanie na zagadki oraz optymalizacje graficzne.
- */
-
 (function () {
     'use strict';
 
     // Globalny stan aplikacji i konfiguracja
     window.SSS_CONFIG = {
         version: "3.7.4",
-        githubUrl: "https://raw.githubusercontent.com/Gajoss/huj/main/",
+        githubUrl: "https://raw.githubusercontent.com/Gajoss/huj/",
         autoExpeditions: false,
         autoArena: false,
         autoAbyss: false,
