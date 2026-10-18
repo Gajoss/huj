@@ -1,330 +1,418 @@
-let _0x514e3d = false;
+let isScriptLoaded = false;
+
 $("body").on("click", ".qlink.load_afo", () => {
-  if (_0x514e3d) {
+  if (isScriptLoaded) {
     GAME.komunikat("Skrypt został już załadowany.");
     return;
   }
-  _0x514e3d = true;
+  isScriptLoaded = true;
+
+  // 1. Modifikacja interfejsu (Move Buttons & Hide Main Panel)
   setTimeout(() => {
-    const _0x3d11f0 = document.querySelectorAll(".gh_button.gh_resp, .gh_button.gh_code, .gh_button.gh_res, .gh_button.gh_lpvm, .gh_button.gh_pvp");
-    const _0x37fae0 = document.getElementById("top_bar");
-    const _0x24661e = document.getElementById('main_Panel');
-    if (_0x37fae0) {
-      _0x3d11f0.forEach(_0x2f9a94 => {
-        _0x2f9a94.style.cursor = "pointer";
-        const _0x4d0c89 = _0x2f9a94.querySelector("b.gh_status.red");
-        if (_0x4d0c89) {
-          _0x4d0c89.remove();
+    const buttons = document.querySelectorAll(
+      ".gh_button.gh_resp, .gh_button.gh_code, .gh_button.gh_res, .gh_button.gh_lpvm, .gh_button.gh_pvp"
+    );
+    const topBar = document.getElementById("top_bar");
+    const mainPanel = document.getElementById("main_Panel");
+
+    if (topBar) {
+      buttons.forEach((btn) => {
+        btn.style.cursor = "pointer";
+        const redStatus = btn.querySelector("b.gh_status.red");
+        if (redStatus) {
+          redStatus.remove();
         }
-        _0x37fae0.appendChild(_0x2f9a94);
+        topBar.appendChild(btn);
       });
     }
-    if (_0x24661e) {
-      _0x24661e.style.display = "none";
+
+    if (mainPanel) {
+      mainPanel.style.display = "none";
     }
-  }, 0x7d0);
-  const _0x29617e = (_0x4d6cd5, _0x4ec929) => {
-    const _0x419550 = document.getElementById(_0x4ec929);
-    if (!_0x419550) {
-      return;
-    }
-    _0x419550.style.display = "none";
-    document.querySelectorAll(_0x4d6cd5).forEach(_0x389bb7 => {
-      _0x389bb7.addEventListener('mouseenter', () => {
-        _0x419550.style.display = 'block';
-        const _0x2b0917 = _0x389bb7.getBoundingClientRect();
-        _0x419550.style.position = "absolute";
-        _0x419550.style.left = _0x2b0917.left + 'px';
-        _0x419550.style.top = _0x2b0917.bottom + window.scrollY + 0xf + 'px';
-        _0x419550.style.zIndex = 0x3e7;
+  }, 2000);
+
+  // Funkcja pomocnicza do obsługi wysuwanych paneli
+  const attachPanelHover = (buttonSelector, panelId) => {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+
+    panel.style.display = "none";
+
+    document.querySelectorAll(buttonSelector).forEach((btn) => {
+      btn.addEventListener("mouseenter", () => {
+        panel.style.display = "block";
+        const rect = btn.getBoundingClientRect();
+        panel.style.position = "absolute";
+        panel.style.left = rect.left + "px";
+        panel.style.top = rect.bottom + window.scrollY + 15 + "px";
+        panel.style.zIndex = 999;
       });
-      _0x389bb7.addEventListener("mouseleave", () => {
+
+      btn.addEventListener("mouseleave", () => {
         setTimeout(() => {
-          if (!_0x419550.matches(":hover")) {
-            _0x419550.style.display = "none";
+          if (!panel.matches(":hover")) {
+            panel.style.display = "none";
           }
-        }, 0x64);
+        }, 100);
       });
     });
-    _0x419550.addEventListener("mouseleave", () => {
-      _0x419550.style.display = "none";
+
+    panel.addEventListener("mouseleave", () => {
+      panel.style.display = "none";
     });
   };
+
   setTimeout(() => {
-    _0x29617e(".gh_button.gh_code", "code_Panel");
-    _0x29617e(".gh_button.gh_resp", "resp_Panel");
-    _0x29617e(".gh_button.gh_res", "res_Panel");
-    _0x29617e(".gh_button.gh_lpvm", "lpvm_Panel");
-    _0x29617e('.gh_button.gh_pvp', "pvp_Panel");
-  }, 0x1770);
-  (function _0x2e8b84() {
-    let _0x4e549c = [];
-    let _0x14e707 = null;
-    let _0x53738f = [];
-    let _0x4e5f61 = false;
-    let _0x24bce6 = null;
-    let _0x50630b = null;
-    let _0x3a978e = false;
-    const _0x408e21 = {
-      '1,0': 0x7,
-      '-1,0': 0x8,
-      '0,1': 0x1,
-      '0,-1': 0x2,
-      '1,1': 0x3,
-      '-1,-1': 0x6,
-      '1,-1': 0x5,
-      '-1,1': 0x4
+    attachPanelHover(".gh_button.gh_code", "code_Panel");
+    attachPanelHover(".gh_button.gh_resp", "resp_Panel");
+    attachPanelHover(".gh_button.gh_res", "res_Panel");
+    attachPanelHover(".gh_button.gh_lpvm", "lpvm_Panel");
+    attachPanelHover(".gh_button.gh_pvp", "pvp_Panel");
+  }, 6000);
+
+  // 2. Moduł Nawigacji i Questów
+  (function initQuestAndPathfinder() {
+    let pathQueue = [];
+    let easystarInstance = null;
+    let mapGrid = [];
+    let isWalking = false;
+    let targetCoords = null;
+    let lastCharLoc = null;
+    let isMapReady = false;
+
+    // Mapa kierunków ruchu gracza
+    const directionMap = {
+      "1,0": 7,
+      "-1,0": 8,
+      "0,1": 1,
+      "0,-1": 2,
+      "1,1": 3,
+      "-1,-1": 6,
+      "1,-1": 5,
+      "-1,1": 4,
     };
-    function _0x1f6ffb(_0x558aed) {
-      if (window.EasyStar) {
-        return _0x558aed();
-      }
-      const _0x1326ad = document.createElement("script");
-      _0x1326ad.src = "https://cdn.jsdelivr.net/npm/easystarjs@0.4.3/bin/easystar-0.4.3.min.js";
-      _0x1326ad.onload = _0x558aed;
-      document.head.appendChild(_0x1326ad);
+
+    // Ładowanie biblioteki EasyStar.js z CDN
+    function loadEasyStar(callback) {
+      if (window.EasyStar) return callback();
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/easystarjs@0.4.3/bin/easystar-0.4.3.min.js";
+      script.onload = callback;
+      document.head.appendChild(script);
     }
-    function _0x4a04db() {
-      const _0x1835b5 = Object.keys(GAME).find(_0x4b0718 => GAME[_0x4b0718]?.["1_1"]);
-      if (!_0x1835b5) {
-        return;
-      }
-      const _0x298dc2 = GAME[_0x1835b5];
-      _0x53738f = [];
-      for (let _0x31fa31 = 0x1; _0x31fa31 <= GAME.map.max_y; _0x31fa31++) {
-        const _0x5cc941 = [];
-        for (let _0x565a62 = 0x1; _0x565a62 <= GAME.map.max_x; _0x565a62++) {
-          const _0x496dc6 = _0x298dc2[_0x565a62 + '_' + _0x31fa31];
-          _0x5cc941.push(_0x496dc6 && _0x496dc6.m === 0x1 ? 0x1 : 0x0);
+
+    // Budowanie siatki do poruszania się
+    function buildMapGrid() {
+      const mapKey = Object.keys(GAME).find((k) => GAME[k]?.["1_1"]);
+      if (!mapKey) return;
+
+      const gameMap = GAME[mapKey];
+      mapGrid = [];
+
+      for (let y = 1; y <= GAME.map.max_y; y++) {
+        const row = [];
+        for (let x = 1; x <= GAME.map.max_x; x++) {
+          const tile = gameMap[x + "_" + y];
+          // 1 = pole po którym można chodzić, 0 = przeszkoda
+          row.push(tile && tile.m === 1 ? 1 : 0);
         }
-        _0x53738f.push(_0x5cc941);
+        mapGrid.push(row);
       }
     }
-    function _0x483f7b() {
-      _0x14e707 = new EasyStar.js();
-      _0x14e707.setGrid(_0x53738f);
-      _0x14e707.setAcceptableTiles([0x1]);
-      _0x14e707.enableDiagonals();
+
+    function setupPathfinder() {
+      easystarInstance = new EasyStar.js();
+      easystarInstance.setGrid(mapGrid);
+      easystarInstance.setAcceptableTiles([1]);
+      easystarInstance.enableDiagonals();
     }
-    function _0x429915(_0x3d4980) {
-      const _0x3a8cb5 = setInterval(() => {
-        if (GAME.map && GAME.map.max_x > 0x0 && GAME.map.max_y > 0x0 && Object.keys(GAME).some(_0x58f1eb => GAME[_0x58f1eb]?.['1_1'])) {
-          clearInterval(_0x3a8cb5);
-          _0x4a04db();
-          _0x483f7b();
-          _0x3a978e = true;
-          if (_0x3d4980) {
-            _0x3d4980();
-          }
+
+    function initMapData(callback) {
+      const interval = setInterval(() => {
+        if (
+          GAME.map &&
+          GAME.map.max_x > 0 &&
+          GAME.map.max_y > 0 &&
+          Object.keys(GAME).some((k) => GAME[k]?.["1_1"])
+        ) {
+          clearInterval(interval);
+          buildMapGrid();
+          setupPathfinder();
+          isMapReady = true;
+          if (callback) callback();
         }
-      }, 0x64);
+      }, 100);
     }
-    function _0x5dd577() {
+
+    // Wykrywanie zmiany lokacji/mapy przez gracza
+    function monitorLocationChange() {
       setInterval(() => {
-        const _0x557c36 = GAME.char_data?.["loc"];
-        if (_0x557c36 && _0x557c36 !== _0x50630b) {
-          _0x50630b = _0x557c36;
-          _0x3a978e = false;
-          _0x4e5f61 = false;
-          _0x4e549c = [];
-          _0x429915(() => _0x4b6a8f());
+        const currentLoc = GAME.char_data?.["loc"];
+        if (currentLoc && currentLoc !== lastCharLoc) {
+          lastCharLoc = currentLoc;
+          isMapReady = false;
+          isWalking = false;
+          pathQueue = [];
+          initMapData(() => updateQuestUI());
         }
-      }, 0xc8);
+      }, 200);
     }
-    function _0x321fa6(_0x2309d5, _0x395dc2, _0xda00c6, _0x28426e, _0x5cb63a) {
-      if (!_0x3a978e || !_0x14e707) {
-        return;
-      }
-      _0x14e707.setGrid(_0x53738f);
-      _0x14e707.findPath(_0x2309d5 - 0x1, _0x395dc2 - 0x1, _0xda00c6 - 0x1, _0x28426e - 0x1, _0x31d311 => {
-        if (!_0x31d311) {
-          return;
+
+    function calculatePath(startX, startY, endX, endY, onPathFound) {
+      if (!isMapReady || !easystarInstance) return;
+
+      easystarInstance.setGrid(mapGrid);
+      easystarInstance.findPath(startX - 1, startY - 1, endX - 1, endY - 1, (path) => {
+        if (!path) return;
+        if (path.length && path[0].x === startX - 1 && path[0].y === startY - 1) {
+          path.shift();
         }
-        if (_0x31d311.length && _0x31d311[0x0].x === _0x2309d5 - 0x1 && _0x31d311[0x0].y === _0x395dc2 - 0x1) {
-          _0x31d311.shift();
-        }
-        _0x5cb63a(_0x31d311);
+        onPathFound(path);
       });
-      _0x14e707.calculate();
+      easystarInstance.calculate();
     }
-    function _0x472017() {
-      if (!_0x4e5f61 || !_0x4e549c.length) {
-        return _0x4e5f61 = false;
+
+    // Krok po kroku wysyłanie pakietu o ruchu
+    function stepNextPath() {
+      if (!isWalking || !pathQueue.length) {
+        return (isWalking = false);
       }
-      const _0x2bf9e9 = _0x4e549c.shift();
-      const _0x22af54 = GAME.char_data.x - 0x1;
-      const _0x7e1557 = GAME.char_data.y - 0x1;
-      const _0x2fd390 = _0x2bf9e9.x - _0x22af54;
-      const _0x4a1201 = _0x2bf9e9.y - _0x7e1557;
-      const _0x38f762 = _0x408e21[_0x2fd390 + ',' + _0x4a1201];
-      if (_0x38f762) {
-        GAME.socket.emit('ga', {
-          'a': 0x4,
-          'dir': _0x38f762,
-          'vo': [0x1, 0x1, 0x0, 0x1, 0x1, 0x1]
+
+      const nextTile = pathQueue.shift();
+      const currentX = GAME.char_data.x - 1;
+      const currentY = GAME.char_data.y - 1;
+
+      const diffX = nextTile.x - currentX;
+      const diffY = nextTile.y - currentY;
+      const dirCode = directionMap[diffX + "," + diffY];
+
+      if (dirCode) {
+        GAME.socket.emit("ga", {
+          a: 4,
+          dir: dirCode,
+          vo: [1, 1, 0, 1, 1, 1],
         });
       }
+
       setTimeout(() => {
-        const {
-          x: _0x15c9e7,
-          y: _0x8018c5
-        } = GAME.char_data;
-        if (!_0x4e549c.length) {
-          return _0x4e5f61 = false;
+        const { x, y } = GAME.char_data;
+        if (!pathQueue.length) {
+          return (isWalking = false);
         }
-        _0x321fa6(_0x15c9e7, _0x8018c5, _0x24bce6.x, _0x24bce6.y, _0x1bfbcc => {
-          _0x4e549c = _0x1bfbcc || [];
-          _0x472017();
+        // Przeliczanie ścieżki na bieżąco
+        calculatePath(x, y, targetCoords.x, targetCoords.y, (newPath) => {
+          pathQueue = newPath || [];
+          stepNextPath();
         });
-      }, 0x64);
+      }, 100);
     }
-    function _0x230d06(_0x4ad7f9, _0xd90c1d) {
-      if (!_0x3a978e) {
-        return;
-      }
-      _0x4a04db();
-      _0x483f7b();
-      _0x4e549c = [];
-      _0x4e5f61 = true;
-      _0x24bce6 = {
-        'x': _0x4ad7f9,
-        'y': _0xd90c1d
-      };
-      const {
-        x: _0x293c0a,
-        y: _0x35f6b5
-      } = GAME.char_data;
-      _0x321fa6(_0x293c0a, _0x35f6b5, _0x4ad7f9, _0xd90c1d, _0x30df29 => {
-        _0x4e549c = _0x30df29 || [];
-        _0x472017();
+
+    // Główna funkcja do automatycznego chodzenia do celu (X, Y)
+    function walkTo(targetX, targetY) {
+      if (!isMapReady) return;
+
+      buildMapGrid();
+      setupPathfinder();
+      pathQueue = [];
+      isWalking = true;
+      targetCoords = { x: targetX, y: targetY };
+
+      const { x: curX, y: curY } = GAME.char_data;
+      calculatePath(curX, curY, targetX, targetY, (path) => {
+        pathQueue = path || [];
+        stepNextPath();
       });
     }
-    window.walkTo = _0x230d06;
-    function _0x93d51c(_0x19e29c) {
-      const _0x4845c2 = document.querySelector("#track_quest_" + _0x19e29c);
-      if (!_0x4845c2) {
-        return null;
-      }
-      const _0x21b6ae = _0x4845c2.querySelector("span");
-      if (!_0x21b6ae) {
-        return null;
-      }
-      const _0x14f885 = _0x21b6ae.textContent.match(/([\d\s]+)\s*\/\s*([\d\s]+)/);
-      if (!_0x14f885) {
-        return null;
-      }
-      const _0x668b3c = Number(_0x14f885[0x1].replace(/\s/g, ''));
-      const _0x20edcb = Number(_0x14f885[0x2].replace(/\s/g, ''));
-      if (!_0x668b3c || !_0x20edcb) {
-        return 0x0;
-      }
-      return Math.min(Math.round(_0x668b3c / _0x20edcb * 0x64), 0x64);
+
+    window.walkTo = walkTo;
+
+    // Parsowanie postępu questa (np. "5 / 10" -> 50%)
+    function getQuestProgressPercent(questId) {
+      const trackerEl = document.querySelector("#track_quest_" + questId);
+      if (!trackerEl) return null;
+
+      const span = trackerEl.querySelector("span");
+      if (!span) return null;
+
+      const match = span.textContent.match(/([\d\s]+)\s*\/\s*([\d\s]+)/);
+      if (!match) return null;
+
+      const current = Number(match[1].replace(/\s/g, ""));
+      const total = Number(match[2].replace(/\s/g, ""));
+
+      if (!current || !total) return 0;
+      return Math.min(Math.round((current / total) * 100), 100);
     }
-    function _0x166759() {
-      const _0x13358f = [];
-      const _0x2b43ca = GAME.map_quests;
-      if (!_0x2b43ca) {
-        return _0x13358f;
-      }
-      for (const [_0x8475f6, _0x291fcf] of Object.entries(_0x2b43ca)) {
-        for (const _0x39ce03 of _0x291fcf) {
-          if (!_0x39ce03 || !_0x39ce03.name) {
-            continue;
-          }
-          const [_0x40f397, _0x2ccd36] = _0x8475f6.split('_').map(Number);
-          const _0x4de03e = _0x93d51c(_0x39ce03.qb_id);
-          _0x13358f.push({
-            'x': _0x40f397,
-            'y': _0x2ccd36,
-            'name': _0x39ce03.name,
-            'id': _0x39ce03.qb_id,
-            'percent': _0x4de03e
+
+    function getMapQuests() {
+      const questsList = [];
+      const mapQuests = GAME.map_quests;
+      if (!mapQuests) return questsList;
+
+      for (const [coordKey, questArray] of Object.entries(mapQuests)) {
+        for (const quest of questArray) {
+          if (!quest || !quest.name) continue;
+
+          const [qx, qy] = coordKey.split("_").map(Number);
+          const percent = getQuestProgressPercent(quest.qb_id);
+
+          questsList.push({
+            x: qx,
+            y: qy,
+            name: quest.name,
+            id: quest.qb_id,
+            percent: percent,
           });
         }
       }
-      return _0x13358f;
+      return questsList;
     }
-    function _0x532c74() {
-      if (document.getElementById('kwa_quest_ui')) {
-        return;
-      }
-      const _0x210b98 = document.createElement("div");
-      _0x210b98.id = 'kwa_quest_ui';
-      _0x210b98.style = "\n                position: fixed;\n                bottom: 20px;\n                right: 10px;\n                width: 360px;\n                max-height: 300px;\n                overflow-y: auto;\n                background: rgba(0,0,0,0.85);\n                border: 1px solid #00bfff;\n                border-radius: 6px;\n                padding: 10px;\n                z-index: 9999;\n                font-size: 12px;\n                color: white;\n            ";
-      _0x210b98.innerHTML = "<b style=\"color:#00bfff;\">QUESTY LOKACJI</b><div id=\"kwa_quest_list\"></div>";
-      document.body.appendChild(_0x210b98);
+
+    // Tworzenie UI dla Questów
+    function createQuestUIContainer() {
+      if (document.getElementById("kwa_quest_ui")) return;
+
+      const uiDiv = document.createElement("div");
+      uiDiv.id = "kwa_quest_ui";
+      uiDiv.style = `
+        position: fixed;
+        bottom: 20px;
+        right: 10px;
+        width: 360px;
+        max-height: 300px;
+        overflow-y: auto;
+        background: rgba(0,0,0,0.85);
+        border: 1px solid #00bfff;
+        border-radius: 6px;
+        padding: 10px;
+        z-index: 9999;
+        font-size: 12px;
+        color: white;
+      `;
+      uiDiv.innerHTML = '<b style="color:#00bfff;">QUESTY LOKACJI</b><div id="kwa_quest_list"></div>';
+      document.body.appendChild(uiDiv);
     }
-    function _0x4b6a8f() {
-      const _0x553978 = document.getElementById("kwa_quest_list");
-      if (!_0x553978) {
-        return;
-      }
-      const _0x139aba = _0x166759();
-      _0x553978.innerHTML = '';
-      _0x139aba.forEach(_0x180df7 => {
-        const _0x1093d2 = document.createElement("div");
-        _0x1093d2.style = "\n                    padding: 6px;\n                    margin-top: 6px;\n                    background: rgba(0,191,255,0.15);\n                    cursor: pointer;\n                    border-radius: 6px;\n                ";
-        _0x1093d2.innerHTML = '[' + _0x180df7.x + ", " + _0x180df7.y + "] " + _0x180df7.name;
-        if (_0x180df7.percent != null) {
-          const _0x489c4e = document.createElement("div");
-          _0x489c4e.style = "\n                        width: 100%;\n                        height: 8px;\n                        background: rgba(255,255,255,0.1);\n                        border-radius: 4px;\n                        margin-top: 4px;\n                        overflow: hidden;\n                    ";
-          const _0x197983 = document.createElement("div");
-          _0x197983.style = "\n                        height: 100%;\n                        width: " + _0x180df7.percent + "%;\n                        background: linear-gradient(90deg, #00ff00, #00bfff);\n                        transition: width 0.3s;\n                    ";
-          const _0x467e3b = document.createElement("div");
-          _0x467e3b.style = "font-size:10px;margin-top:2px;color:#00ff00;";
-          _0x467e3b.textContent = "Postęp: " + _0x180df7.percent + '%';
-          _0x489c4e.appendChild(_0x197983);
-          _0x1093d2.appendChild(_0x489c4e);
-          _0x1093d2.appendChild(_0x467e3b);
+
+    // Odświeżanie listy questów w UI
+    function updateQuestUI() {
+      const questContainer = document.getElementById("kwa_quest_list");
+      if (!questContainer) return;
+
+      const quests = getMapQuests();
+      questContainer.innerHTML = "";
+
+      quests.forEach((q) => {
+        const item = document.createElement("div");
+        item.style = `
+          padding: 6px;
+          margin-top: 6px;
+          background: rgba(0,191,255,0.15);
+          cursor: pointer;
+          border-radius: 6px;
+        `;
+        item.innerHTML = `[${q.x}, ${q.y}] ${q.name}`;
+
+        if (q.percent != null) {
+          const progressBarBg = document.createElement("div");
+          progressBarBg.style = `
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+          `;
+
+          const progressBarFill = document.createElement("div");
+          progressBarFill.style = `
+            height: 100%;
+            width: ${q.percent}%;
+            background: linear-gradient(90deg, #00ff00, #00bfff);
+            transition: width 0.3s;
+          `;
+
+          const progressText = document.createElement("div");
+          progressText.style = "font-size:10px;margin-top:2px;color:#00ff00;";
+          progressText.textContent = "Postęp: " + q.percent + "%";
+
+          progressBarBg.appendChild(progressBarFill);
+          item.appendChild(progressBarBg);
+          item.appendChild(progressText);
         }
-        _0x1093d2.onclick = () => _0x230d06(_0x180df7.x, _0x180df7.y);
-        _0x553978.appendChild(_0x1093d2);
+
+        // Auto-chodzenie po kliknięciu na quest
+        item.onclick = () => walkTo(q.x, q.y);
+        questContainer.appendChild(item);
       });
     }
-    function _0x181071() {
-      setInterval(_0x4b6a8f, 0x1f4);
+
+    function startQuestLoop() {
+      setInterval(updateQuestUI, 500);
     }
-    function _0x29757a() {
+
+    function boot() {
       if (!window.GAME?.["socket"]) {
-        return setTimeout(_0x29757a, 0x1f4);
+        return setTimeout(boot, 500);
       }
-      _0x1f6ffb(() => {
-        _0x429915();
-        _0x5dd577();
-        _0x532c74();
-        _0x4b6a8f();
-        _0x181071();
+      loadEasyStar(() => {
+        initMapData();
+        monitorLocationChange();
+        createQuestUIContainer();
+        updateQuestUI();
+        startQuestLoop();
         console.log("[KWA] QUESTY + HP BAR ✔ (poprawione minimalne procenty)");
       });
     }
-    _0x29757a();
+
+    boot();
   })();
-  const _0x1886fe = document.createElement("div");
-  _0x1886fe.id = "quick_bar";
-  _0x1886fe.style.display = "flex";
-  _0x1886fe.style.gap = "6px";
-  _0x1886fe.style.margin = "10px 0";
-  const _0x4cd405 = ["Normal", "Champion", "Elita", "Legendarny", "Epicki", "Mistyczny"];
-  _0x4cd405.forEach((_0x1a82fb, _0x5179f7) => {
-    const _0x4e963b = document.createElement("div");
-    _0x4e963b.style = "\n            width: 30px;\n            height: 30px;\n            border: 1px solid #222;\n            cursor: pointer;\n            background-color: #333;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            font-size: 14px;\n            color: white;\n            user-select: none;\n            border-radius: 4px;\n        ";
-    _0x4e963b.title = _0x1a82fb;
-    _0x4e963b.textContent = _0x1a82fb[0x0];
-    _0x4e963b.addEventListener('click', () => {
-      const _0x52b88c = document.getElementById('kws_spawner_ignore_' + _0x5179f7);
-      if (_0x52b88c) {
-        _0x52b88c.click();
-        _0x4e963b.style.backgroundColor = _0x52b88c.checked ? "#4caf50" : '#333';
+
+  // 3. Pasek szybkiego filtrowania rzadkości Mobów (Quick Bar)
+  const quickBar = document.createElement("div");
+  quickBar.id = "quick_bar";
+  quickBar.style.display = "flex";
+  quickBar.style.gap = "6px";
+  quickBar.style.margin = "10px 0";
+
+  const mobRarities = ["Normal", "Champion", "Elita", "Legendarny", "Epicki", "Mistyczny"];
+
+  mobRarities.forEach((rarityName, index) => {
+    const btn = document.createElement("div");
+    btn.style = `
+      width: 30px;
+      height: 30px;
+      border: 1px solid #222;
+      cursor: pointer;
+      background-color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      user-select: none;
+      border-radius: 4px;
+    `;
+    btn.title = rarityName;
+    btn.textContent = rarityName[0]; // Pierwsza litera nazwy
+
+    btn.addEventListener("click", () => {
+      const checkbox = document.getElementById("kws_spawner_ignore_" + index);
+      if (checkbox) {
+        checkbox.click();
+        btn.style.backgroundColor = checkbox.checked ? "#4caf50" : "#333";
       }
     });
-    _0x1886fe.appendChild(_0x4e963b);
+
+    quickBar.appendChild(btn);
   });
-  const _0x21b4fb = document.getElementById("changeLocationWrapper");
-  if (_0x21b4fb) {
-    _0x21b4fb.insertAdjacentElement('afterend', _0x1886fe);
+
+  const locationWrapper = document.getElementById("changeLocationWrapper");
+  if (locationWrapper) {
+    locationWrapper.insertAdjacentElement("afterend", quickBar);
   }
-  const _0x1301ef = document.getElementById("kws_spawn");
-  if (_0x1301ef) {
-    _0x1301ef.style.display = "none";
+
+  const kwsSpawn = document.getElementById("kws_spawn");
+  if (kwsSpawn) {
+    kwsSpawn.style.display = "none";
   }
 });
