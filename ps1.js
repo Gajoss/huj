@@ -7,7 +7,7 @@ async function sha256(text) {
 }
 
 // Adres pliku na GitHubie zawierającego listę dozwolonych zahashowanych PID-ów
-const ACCESS_URL = "https://raw.githubusercontent.com/Gajoss/hu/main/sss.txt";
+const ACCESS_URL = "https://raw.githubusercontent.com/Gajoss/huj/main/sss.txt";
 
 // Automatyczne uruchomienie mechanizmu sprawdzającego co 4 sekundy
 (function () {
