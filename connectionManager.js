@@ -1,20 +1,33 @@
+/**
+ * Menedżer Połączeń i Automatyzacji (KwsConnectionManager)
+ * Odpowiada za monitorowanie stanu połączenia z serwerem gry, obsługę automatycznego
+ * ponownego logowania oraz zarządzanie panelami pomocniczymi (RUN oraz Panel R).
+ */
 class KwsConnectionManager {
   constructor() {
     this.isRunning = false;
-    console.log("KWS: new connection monitor created");
+    console.log("KWS: utworzono nowy monitor połączenia");
     this.runConnectionMonitor();
   }
 
+  /**
+   * Ustawia lub resetuje ciasteczko sesji/rekonnektu gracza.
+   * @param {boolean} isReset - czy zresetować ID postaci
+   */
   setReconnectionCookie(isReset = false) {
     const expiresDate = new Date();
     expiresDate.setTime(expiresDate.getTime() + 86400000); // 24 godziny
     let expires = "expires=" + expiresDate.toUTCString();
     var charId = isReset ? '' : GAME.char_id;
-    console.log("KWS: setting reconnection cookie = %s", charId);
+    console.log("KWS: ustawianie ciasteczka ponownego połączenia = %s", charId);
     document.cookie = "kwsreccharid=" + charId + ';' + expires + ";path=/;domain=kosmiczni.pl";
     document.cookie = "kwsreccharid=" + charId + ';' + expires + ";path=/";
   }
 
+  /**
+   * Pobiera ID postaci z ciasteczka rekonnektu.
+   * @returns {string} ID postaci lub pusty ciąg
+   */
   getReconnectionCookie() {
     let cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
@@ -29,23 +42,32 @@ class KwsConnectionManager {
     return '';
   }
 
+  /**
+   * Przekierowuje użytkownika na stronę główną po rozłączeniu.
+   */
   redirectToMain() {
-    console.log("KWS: redirect to main page after disconnect");
+    console.log("KWS: przekierowanie do strony głównej po rozłączeniu");
     this.isRunning = false;
     GAME.redirect(locals.main_url, 0);
   }
 
+  /**
+   * Wylogowuje użytkownika.
+   */
   logout() {
-    console.log("KWS: logout after disconnect");
+    console.log("KWS: wylogowanie po rozłączeniu");
     const order = { a: 0x1 };
     GAME.emitOrder(order);
     setTimeout(this.redirectToMain, 200);
   }
 
+  /**
+   * Ponownie loguje postać na podstawie zapisanego ciasteczka.
+   */
   login() {
     var charId = this.getReconnectionCookie();
     if (charId != '') {
-      console.log("KWS: reconnecting to disconnected charID = %s", charId);
+      console.log("KWS: ponowne łączenie dla ID postaci = %s", charId);
       const order = {
         a: 0x2,
         char_id: charId
@@ -55,24 +77,33 @@ class KwsConnectionManager {
     }
   }
 
+  /**
+   * Pierwszy krok logowania (kliknięcie przycisku logowania).
+   */
   clickFirstLogin() {
-    console.log("KWS: attempt to login first step...");
+    console.log("KWS: próba logowania - krok 1...");
     $("#cg_login_button1").eq(0).click();
     setTimeout(this.clickSecondLogin, 30000);
   }
 
+  /**
+   * Drugi krok logowania.
+   */
   clickSecondLogin() {
-    console.log("KWS: attempt to login second step...");
+    console.log("KWS: próba logowania - krok 2...");
     $("#cg_login_button2").eq(0).click();
   }
 
+  /**
+   * Główna funkcja weryfikująca stan połączenia i obsługująca rekonnekt.
+   */
   runConnectionMonitor() {
     this.isRunning = true;
-    console.log("KWS: connection monitor check...");
+    console.log("KWS: sprawdzanie monitora połączenia...");
     
-    // Sprawdzenie czy wystąpiło rozłączenie (komunikat o wylogowaniu)
+    // Sprawdzenie czy wystąpiło rozłączenie (komunikat o wylogowaniu w DOM)
     if ($("#kom_con").find("button[data-option=\"logout\"]").length > 0) {
-      console.log("KWS: disconnect detected!");
+      console.log("KWS: wykryto rozłączenie!");
       this.setReconnectionCookie();
       this.logout();
       this.isRunning = false;
@@ -80,7 +111,7 @@ class KwsConnectionManager {
     } else {
       var charId = this.getReconnectionCookie();
       if (charId != '') {
-        console.log("KWS: attempt to login...");
+        console.log("KWS: próba logowania...");
         var charList = [...$("li[data-option=select_char]")];
         if (charList.length != 0) {
           this.login();
@@ -92,14 +123,14 @@ class KwsConnectionManager {
           }
         }
       } else {
-        console.log("KWS: no login needed...");
+        console.log("KWS: logowanie nie jest wymagane...");
       }
     }
     this.isRunning = false;
   }
 }
 
-// Inicjalizacja menedżera połączeń
+// Inicjalizacja menedżera połączeń w pętli interwału (co 40 sekund)
 var kwsConnectionMonitor = undefined;
 if (typeof kwsConnectionMonitorVerifier !== "undefined" && kwsConnectionMonitorVerifier) {
   clearInterval(kwsConnectionMonitorVerifier);
@@ -109,14 +140,14 @@ var kwsConnectionMonitorVerifier = setInterval(verifyConnectionManager, 40000);
 
 function verifyConnectionManager() {
   if (typeof kwsConnectionMonitor === "undefined") {
-    console.log("KWS: no connection monitor - create new");
+    console.log("KWS: brak monitora połączenia - tworzenie nowego");
     kwsConnectionMonitor = new KwsConnectionManager();
   } else {
-    console.log("KWS: connection monitor detected");
+    console.log("KWS: wykryto monitor połączenia");
     if (kwsConnectionMonitor.isRunning) {
-      console.log("KWS: connection monitor running, all good!");
+      console.log("KWS: monitor połączenia działa poprawnie!");
     } else {
-      console.log("KWS: connection monitor not running, trying to manually run it");
+      console.log("KWS: monitor połączenia nie działa, próba ponownego uruchomienia");
       kwsConnectionMonitor.runConnectionMonitor();
     }
   }
@@ -176,17 +207,18 @@ function verifyConnectionManager() {
   function initPanelR() {
     if (window.__r_panel_initialized__) return;
     
-    // Warunek wykrycia elementów gry na stronie
+    // Warunek wykrycia elementów interfejsu gry na stronie
     if (!(document.getElementById("game") || document.getElementById("map") || document.getElementById("middle") || document.querySelector("#battle") || document.querySelector(".hero") || document.querySelector(".qlink.load_afo") || document.querySelector("#chat") || (typeof GAME !== "undefined" && GAME.char_id))) {
       setTimeout(initPanelR, 500);
       return;
     }
 
     window.__r_panel_initialized__ = true;
-    console.log("[Panel R] 🎮 Wejście na postać wykryte, uruchamiam Panel R...");
+    console.log("[Panel R] 🎮 Wykryto wejście na postać, uruchamianie Panelu R...");
     buildUiAndLogic();
   }
 
+  // Nasłuchiwanie kliknięć w listę postaci
   document.addEventListener("click", function (e) {
     const charListCon = document.getElementById("char_list_con");
     if (!charListCon || !charListCon.contains(e.target)) return;
@@ -204,8 +236,9 @@ function verifyConnectionManager() {
   }
 
   function buildUiAndLogic() {
-    console.log("[Panel R] 🚀 Start skryptu...");
+    console.log("[Panel R] 🚀 Uruchamianie skryptu panelu...");
     
+    // Wstrzyknięcie stylów CSS dla panelu bocznego
     const style = document.createElement("style");
     style.innerHTML = `
             #rToggleBtn {
@@ -254,11 +287,13 @@ function verifyConnectionManager() {
         `;
     document.head.appendChild(style);
 
+    // Tworzenie przycisku rozwijającego Panel R
     const toggleBtn = document.createElement("div");
     toggleBtn.id = "rToggleBtn";
     toggleBtn.innerText = 'R';
     document.body.appendChild(toggleBtn);
 
+    // Tworzenie elementu bocznego panelu z przełącznikami trybów
     const sidePanel = document.createElement("div");
     sidePanel.id = "rSidePanel";
     sidePanel.innerHTML = `
@@ -309,7 +344,7 @@ function verifyConnectionManager() {
     sidePanel.addEventListener("click", (e) => e.stopPropagation());
     document.addEventListener("click", () => sidePanel.classList.remove("open"));
 
-    // Funkcje pomocnicze localStorage
+    // Funkcje obsługi pamięci lokalnej (localStorage) dla trybów i nagranych akcji
     const getSavedModes = () => {
       try { return JSON.parse(localStorage.getItem("r_panel_modes_v7")) || {}; } catch (e) {}
       return { pvm: false, pvp: false, listy: false, zbierajka: false, kody: false };
@@ -322,7 +357,7 @@ function verifyConnectionManager() {
     const saveRecordedClicks = (mode, clicks) => localStorage.setItem("r_panel_clicks_v7_" + mode, JSON.stringify(clicks));
     const clearRecordedClicks = (mode) => {
       localStorage.removeItem("r_panel_clicks_v7_" + mode);
-      console.log("[Panel R] 🗑️ Skasowano zapamiętane akcje dla " + mode.toUpperCase());
+      console.log("[Panel R] 🗑️ Skasowano zapamiętane akcje dla trybu: " + mode.toUpperCase());
     };
 
     const currentModes = getSavedModes();
@@ -344,6 +379,9 @@ function verifyConnectionManager() {
     const beanTypes = ["resp_blue", "resp_green", "resp_purple", "resp_yellow", "resp_red", "resp_magic"];
     const pvpTypes = ["pvp_Code", "pvpCODE_konto", "pvp_konto", "pvp_rb_avoid", "pvp_WI", "pvp_WK"];
 
+    /**
+     * Symuluje kliknięcie na elemencie docelowym.
+     */
     function triggerClick(element) {
       if (!element) return false;
       try {
@@ -359,6 +397,9 @@ function verifyConnectionManager() {
       return false;
     }
 
+    /**
+     * Sprawdza, czy element akcji jest aktywny.
+     */
     function isElementActive(el) {
       if (!el) return false;
       return el.classList.contains("kws-on") || 
@@ -368,7 +409,7 @@ function verifyConnectionManager() {
                el.querySelector(".resp_status, .pvp_status").textContent.trim() === 'On'));
     }
 
-    // Nasłuchiwacz nagrywania kliknięć w interfejsie gry
+    // Nasłuchiwanie kliknięć użytkownika podczas nagrywania sekwencji
     document.addEventListener("click", (e) => {
       if (!isRecording || !activeMode) return;
       
@@ -386,7 +427,7 @@ function verifyConnectionManager() {
             label: "Mob: " + title
           });
           saveRecordedClicks(activeMode, recordedActions);
-          console.log(`[Panel R] 🔴 NAGRANO: Mob ${title} (razem: ${recordedActions.length})`);
+          console.log(`[Panel R] 🔴 NAGRANO: Mob ${title} (łącznie: ${recordedActions.length})`);
           return;
         }
 
@@ -401,7 +442,7 @@ function verifyConnectionManager() {
               label: "Fasolka: " + beanClass.replace("resp_", '').toUpperCase()
             });
             saveRecordedClicks(activeMode, recordedActions);
-            console.log(`[Panel R] 🔴 NAGRANO: Fasolka ${beanClass.replace("resp_", '').toUpperCase()} (razem: ${recordedActions.length})`);
+            console.log(`[Panel R] 🔴 NAGRANO: Fasolka ${beanClass.replace("resp_", '').toUpperCase()} (łącznie: ${recordedActions.length})`);
             return;
           }
         }
@@ -415,7 +456,7 @@ function verifyConnectionManager() {
             label: "START PVM"
           });
           saveRecordedClicks(activeMode, recordedActions);
-          console.log(`[Panel R] 🔴 NAGRANO: START PVM (razem: ${recordedActions.length})`);
+          console.log(`[Panel R] 🔴 NAGRANO: START PVM (łącznie: ${recordedActions.length})`);
           return;
         }
       }
@@ -434,7 +475,7 @@ function verifyConnectionManager() {
               label: "START PVP"
             });
             saveRecordedClicks(activeMode, recordedActions);
-            console.log(`[Panel R] 🔴 NAGRANO: START PVP (razem: ${recordedActions.length})`);
+            console.log(`[Panel R] 🔴 NAGRANO: START PVP (łącznie: ${recordedActions.length})`);
             return;
           }
 
@@ -447,56 +488,58 @@ function verifyConnectionManager() {
               label: "PVP: " + pvpBtnTarget.textContent.replace(/On|Off/g, '').trim()
             });
             saveRecordedClicks(activeMode, recordedActions);
-            console.log(`[Panel R] 🔴 NAGRANO: PVP ${pvpBtnTarget.textContent.replace(/On|Off/g, '').trim()} (razem: ${recordedActions.length})`);
+            console.log(`[Panel R] 🔴 NAGRANO: PVP ${pvpBtnTarget.textContent.replace(/On|Off/g, '').trim()} (łącznie: ${recordedActions.length})`);
             return;
           }
         }
       }
     }, true);
 
-    // Funkcja odtwarzająca nagrane akcje
+    /**
+     * Odtwarza nagrane akcje automatyzacji.
+     */
     async function playbackActions(actions, panelId) {
       if (!actions || actions.length === 0) {
-        console.warn("[Panel R] ⚠️ Brak kliknięć do odtworzenia");
+        console.warn("[Panel R] ⚠️ Brak nagranych kliknięć do odtworzenia");
         return;
       }
       let panelEl = null;
       for (let i = 0; i < 20; i++) {
         panelEl = document.getElementById(panelId);
         if (panelEl) break;
-        console.log(`[Panel R] ⏳ Czekam na panel ${panelId}... (${i + 1}/20)`);
+        console.log(`[Panel R] ⏳ Oczekiwanie na panel ${panelId}... (${i + 1}/20)`);
         await new Promise(r => setTimeout(r, 500));
       }
       if (!panelEl) {
-        console.error(`[Panel R] ❌ Nie znaleziono panelu ${panelId} po 10 sekundach!`);
+        console.error(`[Panel R] ❌ Nie znaleziono panelu ${panelId} w ciągu 10 sekund!`);
         return;
       }
 
       let executedCount = 0;
-      console.log(`[Panel R] 🔄 ======= ODTWARZAM ${actions.length} AKCJI =======`);
+      console.log(`[Panel R] 🔄 ======= ODTWARZANIE ${actions.length} AKCJI =======`);
       for (let i = 0; i < actions.length; i++) {
         const action = actions[i];
         console.log(`[Panel R] [${i + 1}/${actions.length}] ${action.label}`);
         
         if (action.type === "start") {
-          console.log("[Panel R] ⏳ Czekam 3s przed START...");
+          console.log("[Panel R] ⏳ Oczekiwanie 3s przed uruchomieniem START...");
           await new Promise(r => setTimeout(r, 3000));
           const startBtn = panelEl.querySelector(action.selector);
           if (startBtn) {
             for (let attempt = 1; attempt <= 3; attempt++) {
               if (isElementActive(startBtn)) {
-                console.log("[Panel R]   ⏭️ START już ON");
+                console.log("[Panel R]   ⏭️ Przycisk START jest już włączony (ON)");
                 break;
               }
-              console.log(`[Panel R]   ▶️ START próba ${attempt}/3`);
+              console.log(`[Panel R]   ▶️ Próba włączenia START ${attempt}/3`);
               triggerClick(startBtn);
               executedCount++;
               await new Promise(r => setTimeout(r, 2000));
               if (isElementActive(startBtn)) {
-                console.log("[Panel R]   ✅ START włączony!");
+                console.log("[Panel R]   ✅ Pomyślnie włączono START!");
                 break;
               }
-              if (attempt === 3) console.error("[Panel R]   ❌ START nie włączył się!");
+              if (attempt === 3) console.error("[Panel R]   ❌ Nie udało się włączyć START!");
             }
           }
           continue;
@@ -505,22 +548,22 @@ function verifyConnectionManager() {
         const target = panelEl.querySelector(action.selector);
         if (target) {
           triggerClick(target);
-          console.log("[Panel R]   👆 Kliknięto");
+          console.log("[Panel R]   👆 Kliknięto element");
           executedCount++;
         } else {
-          console.warn("[Panel R]   ⚠️ Nie znaleziono: " + action.selector);
+          console.warn("[Panel R]   ⚠️ Nie znaleziono elementu: " + action.selector);
         }
         await new Promise(r => setTimeout(r, 1200));
       }
-      console.log(`[Panel R] ✅ ======= KONIEC - ${executedCount} akcji =======`);
+      console.log(`[Panel R] ✅ ======= ZAKOŃCZONO - wykonano ${executedCount} akcji =======`);
     }
 
-    // Obsługa przełączników w menu bocznym
+    // Obsługa zdarzeń przełączania trybów w panelu bocznym
     sidePanel.querySelectorAll("input[data-toggle]").forEach(input => {
       input.addEventListener("change", function () {
         const mode = this.dataset.toggle;
         const isChecked = this.checked;
-        console.log(`[Panel R] 🔀 ${mode.toUpperCase()}: ${isChecked ? 'ON' : "OFF"}`);
+        console.log(`[Panel R] 🔀 Tryb ${mode.toUpperCase()}: ${isChecked ? 'ON' : "OFF"}`);
         
         const modes = getSavedModes();
         modes[mode] = isChecked;
@@ -533,27 +576,27 @@ function verifyConnectionManager() {
           isRecording = true;
           activeMode = mode;
           saveRecordedClicks(mode, []);
-          console.log(`[Panel R] ✅ [ON] NAGRYWAM ${mode.toUpperCase()} - wykonaj akcje w odpowiednim panelu`);
+          console.log(`[Panel R] ✅ [ON] NAGRYWANIE DLA ${mode.toUpperCase()} - wykonaj akcje w panelu gry`);
         } else {
           isRecording = false;
           activeMode = null;
           recordedActions = [];
           clearRecordedClicks(mode);
-          console.log(`[Panel R] 🗑️ [OFF] ZAPOMNIANE.`);
+          console.log(`[Panel R] 🗑️ [OFF] Wyłączono i wyczyszczono pamięć trybu.`);
         }
       });
     });
 
-    // Sekwencja automatycznego uruchamiania po załadowaniu strony
+    // Sekwencja automatycznego uruchamiania po starcie/odświeżeniu
     (function checkAutoRun() {
       const savedModes = getSavedModes();
       const activeEntryMode = Object.keys(savedModes).find(m => savedModes[m]);
       if (!activeEntryMode) {
-        console.log("[Panel R] 🔇 Brak aktywnego trybu");
+        console.log("[Panel R] 🔇 Brak aktywnego trybu automatyzacji");
         return;
       }
       if (activeEntryMode !== "pvm" && activeEntryMode !== "pvp") {
-        console.log(`[Panel R] ⏭️ Tryb ${activeEntryMode.toUpperCase()} nie ma auto-odtwarzania`);
+        console.log(`[Panel R] ⏭️ Tryb ${activeEntryMode.toUpperCase()} nie posiada automatycznego odtwarzania`);
         recordedActions = [];
         isRecording = true;
         activeMode = activeEntryMode;
@@ -562,7 +605,7 @@ function verifyConnectionManager() {
 
       const savedActions = getRecordedClicks(activeEntryMode);
       if (!savedActions || savedActions.length === 0) {
-        console.log(`[Panel R] ⚠️ Brak zapisanych akcji dla ${activeEntryMode.toUpperCase()}`);
+        console.log(`[Panel R] ⚠️ Brak zapisanych kroków dla trybu ${activeEntryMode.toUpperCase()}`);
         recordedActions = [];
         isRecording = true;
         activeMode = activeEntryMode;
@@ -578,12 +621,12 @@ function verifyConnectionManager() {
         ? ".kws_panel_icon[data-tooltip=\"PVM\"], .kws_panel_icon[data-panel-id=\"resp_Panel\"]" 
         : ".kws_panel_icon[data-tooltip=\"PVP\"], .kws_panel_icon[data-panel-id=\"pvp_Panel\"]";
 
-      console.log(`[Panel R] ⏰ Sekwencja: 48s→AFO, 58s→panel ${activeEntryMode.toUpperCase()}, 63s→odtwarzanie ${savedActions.length} akcji`);
+      console.log(`[Panel R] ⏰ Zaplanowano sekwencję: 48s -> AFO, 58s -> panel ${activeEntryMode.toUpperCase()}, 63s -> odtwarzanie ${savedActions.length} akcji`);
       
       setTimeout(() => {
         const afoBtn = document.querySelector(".qlink.load_afo");
         if (afoBtn) {
-          console.log("[Panel R] 🔌 [48s] Klikam \"Załaduj AFO\"...");
+          console.log("[Panel R] 🔌 [48s] Klikanie przycisku \"Załaduj AFO\"...");
           triggerClick(afoBtn);
         } else {
           console.warn("[Panel R] ⚠️ Nie znaleziono przycisku AFO");
@@ -592,4 +635,18 @@ function verifyConnectionManager() {
         setTimeout(() => {
           const panelIcon = document.querySelector(panelIconSelector);
           if (panelIcon) {
-            console.log(`[Panel R] 🔘 [58s] Klikam ikonę ${activeEntryMode.toUpperCase()}`);
+            console.log(`[Panel R] 🔘 [58s] Klikanie ikony panelu ${activeEntryMode.toUpperCase()}`);
+            triggerClick(panelIcon);
+          } else {
+            console.warn(`[Panel R] ⚠️ Nie znaleziono ikony panelu ${activeEntryMode.toUpperCase()}`);
+          }
+
+          setTimeout(() => {
+            console.log(`[Panel R] ▶️ [63s] Uruchamianie odtwarzania akcji dla ${activeEntryMode.toUpperCase()}`);
+            playbackActions(savedActions, targetPanelId);
+          }, 5000);
+        }, 10000);
+      }, 48000);
+    })();
+  }
+})();
