@@ -1,647 +1,891 @@
+/**
+ * Automated Training Manager (Trainer / Bot)
+ * Twórca: Yasoen dla Tralalelu
+ * 
+ * Skrypt automatyzuje proces treningu postaci w grze przeglądarkowej:
+ * - Pobiera listę wynajętych postaci z klanu,
+ * - Przełącza się między nimi i rozpoczyna wybrany trening,
+ * - Uruchamia transformacje (SSJ) przed treningiem,
+ * - Obsługuje kody treningowe i monitoruje czas zakończenia treningów.
+ */
+
+// ==========================================
+// SEKCJA 1: Inicjalizacja i automatyczne uruchamianie
+// ==========================================
 setTimeout(() => {
-  console.log("Czekam 40s...");
-  const _0x284dc4 = document.getElementById("tr-save");
-  if (_0x284dc4) {
-    _0x284dc4.click();
+  console.log("Czekam 8 sekund przed zapisem...");
+  const saveBtn = document.getElementById("tr-save");
+  if (saveBtn) {
+    saveBtn.click();
     console.log("Kliknięto Zapisz");
   } else {
-    console.warn("Brak #tr-save");
+    console.warn("Brak elementu #tr-save");
   }
+
   setTimeout(() => {
-    const _0x8229bb = document.getElementById('tr-power');
-    if (_0x8229bb) {
-      _0x8229bb.click();
+    const powerBtn = document.getElementById('tr-power');
+    if (powerBtn) {
+      powerBtn.click();
       console.log("Kliknięto OFF/ON");
     } else {
-      console.warn("Brak #tr-power");
+      console.warn("Brak elementu #tr-power");
     }
-  }, 0x1388);
-}, 0x1f40);
+  }, 5000); // 5 sekund po zapisie
+}, 8000); // 8 sekund po załadowaniu skryptu
+
+
+// ==========================================
+// SEKCJA 2: Główna logika i weryfikacja licencji
+// ==========================================
 (() => {
   'use strict';
 
-  const _0x119a6a = Array.from("Created by yasoen for Tralalelu").reduce((_0x47e4a5, _0x154848) => _0x47e4a5 * 0x1f + _0x154848.charCodeAt(0x0) & 0xffffffff, 0x45a3f1b2);
-  if (_0x119a6a !== 0x8e56b6f) {
+  // Weryfikacja nagłówka autorstwa za pomocą prostego hasza
+  const authorSignatureHash = Array.from("Created by yasoen for Tralalelu")
+    .reduce((hash, char) => hash * 31 + char.charCodeAt(0) & 0xffffffff, 0x45a3f1b2);
+
+  if (authorSignatureHash !== 149253103) { // 0x8e56b6f
     console.error("Odezwij sie na dc do: Yasoen.   :)");
     return;
   }
-  const _0x54266d = [{
-    'value': "siła",
-    'label': "Siła"
-  }, {
-    'value': "szybkość",
-    'label': "Szybkość"
-  }, {
-    'value': "wytrzymałość",
-    'label': "Wytrzymałość"
-  }, {
-    'value': "Energia Ki",
-    'label': 'Ki'
-  }, {
-    'value': "Siła Woli",
-    'label': "Siła Woli"
-  }];
-  const _0x156b3d = {
-    'GET_RENTED': {
-      'a': 0x27,
-      'type': 0x2f
-    },
-    'USE_CHAR': _0x416212 => ({
-      'a': 0x27,
-      'type': 0x30,
-      'target': _0x416212
-    }),
-    'TRAINING_START': (_0x5a11d4, _0x32f9a7) => ({
-      'a': 0x8,
-      'type': 0x2,
-      'stat': _0x5a11d4,
-      'duration': _0x32f9a7
-    }),
-    'TRAINING_CODE': {
-      'a': 0x8,
-      'type': 0x5,
-      'apud': 'vzaaa'
-    },
-    'SSJ_START': _0x37179c => ({
-      'a': 0x12,
-      'type': 0x5,
-      'tech_id': _0x37179c
-    }),
-    'SSJ_STOP': {
-      'a': 0x12,
-      'type': 0x6
-    },
-    'LOGOUT': _0x5bdbc5 => ({
-      'a': 0x2,
-      'char_id': _0x5bdbc5
-    })
+
+  // Lista dostępnych statystyk do wyboru w interfejsie
+  const STATS_OPTIONS = [
+    { value: "siła", label: "Siła" },
+    { value: "szybkość", label: "Szybkość" },
+    { value: "wytrzymałość", label: "Wytrzymałość" },
+    { value: "Energia Ki", label: "Ki" },
+    { value: "Siła Woli", label: "Siła Woli" }
+  ];
+
+  // Mapowanie komend gniazda serwera (Socket Commands)
+  const SOCKET_COMMANDS = {
+    GET_RENTED: { a: 39, type: 47 },
+    USE_CHAR: (targetId) => ({ a: 39, type: 48, target: targetId }),
+    TRAINING_START: (statType, duration) => ({ a: 8, type: 2, stat: statType, duration: duration }),
+    TRAINING_CODE: { a: 8, type: 5, apud: 'vzaaa' },
+    SSJ_START: (techId) => ({ a: 18, type: 5, tech_id: techId }),
+    SSJ_STOP: { a: 18, type: 6 },
+    LOGOUT: (charId) => ({ a: 2, char_id: charId })
   };
-  const _0x11b02f = {
-    'running': false,
-    'step': 0x0,
-    'stat': null,
-    'duration': null,
-    'allowedNicks': [],
-    'includeMainChar': false,
-    'charQueue': [],
-    'queueIndex': 0x0,
-    'charNames': {},
-    'charTimers': [],
-    'mainCharId': null,
-    'mainCharName': null,
-    'monitorMode': false,
-    'monitorInterval': null,
-    'trainingStartedAt': null,
-    'countdownTimer': null
+
+  // Główny stan aplikacji
+  const appState = {
+    running: false,
+    step: 0,
+    stat: null,
+    duration: null,
+    allowedNicks: [],
+    includeMainChar: false,
+    charQueue: [],
+    queueIndex: 0,
+    charNames: {},
+    charTimers: [],
+    mainCharId: null,
+    mainCharName: null,
+    monitorMode: false,
+    monitorInterval: null,
+    trainingStartedAt: null,
+    countdownTimer: null
   };
-  function _0x3c7abb() {
-    const _0x2e8e73 = {
-      'stat': null,
-      'duration': null,
-      'allowedNicks': _0x11b02f.allowedNicks,
-      'includeMainChar': false
+
+  /**
+   * Zapisuje bieżącą konfigurację treningu w pamięci podręcznej przeglądarki.
+   */
+  function saveSettingsToLocalStorage() {
+    const settings = {
+      stat: null,
+      duration: null,
+      allowedNicks: appState.allowedNicks,
+      includeMainChar: false
     };
-    localStorage.setItem('trainer_settings_v1', JSON.stringify(_0x2e8e73));
+    localStorage.setItem('trainer_settings_v1', JSON.stringify(settings));
   }
-  function _0x51a21e() {
+
+  /**
+   * Odczytuje konfigurację z pamięci podręcznej i aktualizuje pola w UI.
+   */
+  function loadSettingsFromLocalStorage() {
     try {
-      const _0x595b94 = localStorage.getItem('trainer_settings_v1');
-      if (!_0x595b94) {
-        return;
-      }
-      const _0x549f98 = JSON.parse(_0x595b94);
-      _0x11b02f.stat = _0x549f98.stat ?? null;
-      _0x11b02f.duration = _0x549f98.duration ?? null;
-      _0x11b02f.allowedNicks = _0x549f98.allowedNicks ?? [];
-      _0x11b02f.includeMainChar = _0x549f98.includeMainChar ?? false;
+      const stored = localStorage.getItem('trainer_settings_v1');
+      if (!stored) return;
+
+      const parsed = JSON.parse(stored);
+      appState.stat = parsed.stat ?? null;
+      appState.duration = parsed.duration ?? null;
+      appState.allowedNicks = parsed.allowedNicks ?? [];
+      appState.includeMainChar = parsed.includeMainChar ?? false;
+
       setTimeout(() => {
-        const _0x6da67c = document.querySelector("input[name=\"tr-stat\"][value=\"null\"]");
-        if (_0x6da67c) {
-          _0x6da67c.checked = true;
+        const nullStatRadio = document.querySelector('input[name="tr-stat"][value="null"]');
+        if (nullStatRadio) nullStatRadio.checked = true;
+
+        const durationInput = document.getElementById("tr-duration");
+        if (durationInput) durationInput.value = null;
+
+        const nicksInput = document.getElementById('tr-nicks');
+        if (nicksInput && appState.allowedNicks.length) {
+          nicksInput.value = appState.allowedNicks.join(';');
         }
-        const _0x43b2c9 = document.getElementById("tr-duration");
-        if (_0x43b2c9 && null) {
-          _0x43b2c9.value = null;
-        }
-        const _0x35cd80 = document.getElementById('tr-nicks');
-        if (_0x35cd80 && _0x11b02f.allowedNicks.length) {
-          _0x35cd80.value = _0x11b02f.allowedNicks.join(';');
-        }
-        const _0x295742 = document.getElementById('tr-main-toggle');
-        if (_0x295742) {
-          _0x295742.checked = false;
-        }
-        _0x2b7d5b("✓ Wczytano zapisane ustawienia");
-      }, 0x64);
-    } catch (_0x5a4479) {
-      console.warn("[Trainer] storage error", _0x5a4479);
+
+        const mainToggle = document.getElementById('tr-main-toggle');
+        if (mainToggle) mainToggle.checked = false;
+
+        updateInfoText("✓ Wczytano zapisane ustawienia");
+      }, 100);
+    } catch (err) {
+      console.warn("[Trainer] Błąd odczytu storage:", err);
     }
   }
-  const _0x3a8efc = (_0x53228f, _0x2ca677 = 0xbb8) => window.setTimeout(_0x53228f, _0x2ca677);
-  const _0x29f102 = (..._0x50f176) => console.log('[Trainer]', ..._0x50f176);
-  function _0x31c7e6(_0x2ebd6a) {
-    if (_0x2ebd6a <= 0x0) {
-      return '00:00:00';
-    }
-    const _0x363a5f = Math.floor(_0x2ebd6a / 0x3e8);
-    const _0x55cbc3 = Math.floor(_0x363a5f / 0xe10);
-    const _0x1d472d = Math.floor(_0x363a5f % 0xe10 / 0x3c);
-    const _0x4b4dbb = _0x363a5f % 0x3c;
-    return [_0x55cbc3, _0x1d472d, _0x4b4dbb].map(_0x5be06e => String(_0x5be06e).padStart(0x2, '0')).join(':');
+
+  // Funkcje pomocnicze
+  const delayCall = (callback, ms = 3000) => window.setTimeout(callback, ms);
+  const logTrainer = (...args) => console.log('[Trainer]', ...args);
+
+  /**
+   * Formatowanie czasu w milisekundach do ciągu hh:mm:ss
+   */
+  function formatTime(ms) {
+    if (ms <= 0) return '00:00:00';
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds].map(val => String(val).padStart(2, '0')).join(':');
   }
-  function _0x14846b() {
+
+  /**
+   * Odczytuje ID głównej postaci z drzewa DOM
+   */
+  function getMainCharId() {
     try {
-      return document.getElementById("char_list_con").children[0x0].attributes[0x2].value;
+      return document.getElementById("char_list_con").children[0].attributes[2].value;
     } catch {
-      console.error("[Trainer] Cannot read main char ID");
+      console.error("[Trainer] Nie można odczytać ID głównej postaci");
       return null;
     }
   }
-  function _0xf33580() {
-    const _0x50dc42 = document.getElementById("clan_rented");
-    if (!_0x50dc42) {
-      return [];
-    }
-    return Array.from(_0x50dc42.children).map(_0x3026df => {
+
+  /**
+   * Pobiera listę wynajętych postaci klanowych
+   */
+  function getRentedCharacters() {
+    const clanRentedEl = document.getElementById("clan_rented");
+    if (!clanRentedEl) return [];
+
+    return Array.from(clanRentedEl.children).map(child => {
       try {
-        const _0x371a0a = _0x3026df.children[0x0].children[0x1];
-        const _0x4c1d0c = parseInt(_0x371a0a.getAttribute('data-char_id'));
-        const _0x1992ab = _0x371a0a.textContent.trim();
-        return {
-          'id': _0x4c1d0c,
-          'name': _0x1992ab
-        };
+        const charAttrEl = child.children[0].children[1];
+        const charId = parseInt(charAttrEl.getAttribute('data-char_id'));
+        const name = charAttrEl.textContent.trim();
+        return { id: charId, name: name };
       } catch {
         return null;
       }
-    }).filter(Boolean).filter(_0x2526ea => !isNaN(_0x2526ea.id));
+    }).filter(Boolean).filter(item => !isNaN(item.id));
   }
-  function _0x5e738c() {
-    const [, _0x369e8f] = $("#server_time").text().split(':');
-    return parseInt(_0x369e8f);
+
+  /**
+   * Odczytuje minuty z zegara serwera
+   */
+  function getServerMinute() {
+    const [, minuteStr] = $("#server_time").text().split(':');
+    return parseInt(minuteStr);
   }
-  function _0x2488b5() {
-    const _0x3c078b = $("#train_uptime span.timer");
-    if (!_0x3c078b.length) {
-      return null;
-    }
-    const _0x4d958d = _0x3c078b.text().trim();
-    if (!_0x4d958d || _0x4d958d === "--:--:--") {
-      return null;
-    }
-    const _0x56a0bd = _0x4d958d.split(':').map(Number);
-    if (_0x56a0bd.length !== 0x3 || _0x56a0bd.some(isNaN)) {
-      return null;
-    }
-    return Date.now() + (_0x56a0bd[0x0] * 0xe10 + _0x56a0bd[0x1] * 0x3c + _0x56a0bd[0x2]) * 0x3e8;
+
+  /**
+   * Pobiera czas zakończenia treningu z paska #train_uptime
+   */
+  function getTrainingEndTime() {
+    const timerSpan = $("#train_uptime span.timer");
+    if (!timerSpan.length) return null;
+
+    const timerText = timerSpan.text().trim();
+    if (!timerText || timerText === "--:--:--") return null;
+
+    const parts = timerText.split(':').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+
+    return Date.now() + (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
   }
-  function _0x50732e() {
-    const _0x825432 = _0x11b02f.charQueue[-1];
-    if (_0x825432 == null) {
+
+  /**
+   * Zapisuje timer dla ostatnio trenowanej postaci
+   */
+  function saveCurrentCharTimer() {
+    const charId = appState.charQueue[appState.queueIndex - 1];
+    if (charId == null) return;
+
+    const endTime = getTrainingEndTime();
+    if (!endTime) {
+      logTrainer("⚠ Nie udało się odczytać czasu treningu");
       return;
     }
-    const _0x2d1ffb = _0x2488b5();
-    if (!_0x2d1ffb) {
-      _0x29f102("⚠ Nie udało się odczytać czasu treningu");
-      return;
-    }
-    const _0x1ba548 = _0x11b02f.charNames[_0x825432] || '#' + _0x825432;
-    const _0x2434b8 = _0x11b02f.charTimers.findIndex(_0xa4c848 => _0xa4c848.id === _0x825432);
-    if (_0x2434b8 >= 0x0) {
-      _0x11b02f.charTimers[_0x2434b8].endWallTime = _0x2d1ffb;
+
+    const name = appState.charNames[charId] || '#' + charId;
+    const timerIndex = appState.charTimers.findIndex(t => t.id === charId);
+
+    if (timerIndex >= 0) {
+      appState.charTimers[timerIndex].endWallTime = endTime;
     } else {
-      _0x11b02f.charTimers.push({
-        'id': _0x825432,
-        'name': _0x1ba548,
-        'endWallTime': _0x2d1ffb
-      });
+      appState.charTimers.push({ id: charId, name: name, endWallTime: endTime });
     }
-    _0x29f102("Timer zapisany dla \"" + _0x1ba548 + "\": wygasa o " + new Date(_0x2d1ffb).toLocaleTimeString());
+    logTrainer(`Timer zapisany dla "${name}": wygasa o ${new Date(endTime).toLocaleTimeString()}`);
   }
-  function _0x214ceb(_0x206c1b) {
-    const _0x2b32bc = _0x206c1b.map(_0x38f879 => _0x38f879.id);
-    if (false && null) {
-      return [null, ..._0x2b32bc];
-    }
-    return _0x2b32bc;
+
+  function filterQueueIds(rentedList) {
+    const ids = rentedList.map(item => item.id);
+    return ids;
   }
-  function _0xad1cdc() {
-    clearInterval(null);
-    _0x11b02f.countdownTimer = null;
-    _0x3d3125('');
+
+  function clearCountdown() {
+    clearInterval(appState.countdownTimer);
+    appState.countdownTimer = null;
+    updateStatusText('');
   }
-  function _0x3862c9() {
-    return;
-    _0x3c72f5();
-    _0xad1cdc();
-    _0x23a535();
+
+  function startMonitorMode() {
+    stopMonitorMode();
+    clearCountdown();
+    renderTimersList();
     document.getElementById("tr-timers").style.display = "block";
-    _0x11b02f.monitorInterval = setInterval(() => {
-      _0x3c72f5();
-      return;
-      _0x23a535();
-      _0xf55e2b();
-    }, 0x3e8);
-    _0x29f102("Tryb monitorowania aktywny.");
+
+    appState.monitorInterval = setInterval(() => {
+      renderTimersList();
+      checkExpiredTimers();
+    }, 1000);
+    logTrainer("Tryb monitorowania aktywny.");
   }
-  function _0x3c72f5() {
-    clearInterval(null);
-    _0x11b02f.monitorInterval = null;
+
+  function stopMonitorMode() {
+    clearInterval(appState.monitorInterval);
+    appState.monitorInterval = null;
   }
-  function _0x23a535() {
-    const _0xfd22d5 = Date.now();
-    const _0x2c2063 = [..._0x11b02f.charTimers].sort((_0x293202, _0x4c890e) => _0x293202.endWallTime - _0x4c890e.endWallTime);
-    const _0x1fda63 = document.getElementById("tr-timer-list");
-    if (!_0x1fda63) {
+
+  function renderTimersList() {
+    const now = Date.now();
+    const sortedTimers = [...appState.charTimers].sort((a, b) => a.endWallTime - b.endWallTime);
+    const container = document.getElementById("tr-timer-list");
+    if (!container) return;
+
+    if (!sortedTimers.length) {
+      container.innerHTML = '<div class="tr-empty">brak danych</div>';
       return;
     }
-    if (!_0x2c2063.length) {
-      _0x1fda63.innerHTML = "<div class=\"tr-empty\">brak danych</div>";
-      return;
-    }
-    _0x1fda63.innerHTML = _0x2c2063.map(_0xf0d9d8 => {
-      const _0x33a809 = _0xf0d9d8.endWallTime - _0xfd22d5;
-      const _0x306e44 = _0x33a809 <= 0x0;
-      return "\n        <div class=\"tr-timer-row" + (_0x306e44 ? " tr-expired" : '') + "\">\n          <span class=\"tr-timer-name\" title=\"" + _0xf0d9d8.name + "\">" + _0xf0d9d8.name + "</span>\n          <span class=\"tr-timer-val" + (_0x306e44 ? " tr-blink" : '') + "\">" + (_0x306e44 ? "▶ RUN" : _0x31c7e6(_0x33a809)) + "</span>\n        </div>";
+
+    container.innerHTML = sortedTimers.map(timer => {
+      const remainingMs = timer.endWallTime - now;
+      const isExpired = remainingMs <= 0;
+      return `
+        <div class="tr-timer-row${isExpired ? " tr-expired" : ""}">
+          <span class="tr-timer-name" title="${timer.name}">${timer.name}</span>
+          <span class="tr-timer-val${isExpired ? " tr-blink" : ""}">${isExpired ? "▶ RUN" : formatTime(remainingMs)}</span>
+        </div>`;
     }).join('');
   }
-  function _0xf55e2b() {
-    const _0x23865b = Date.now();
-    const _0x304126 = _0x11b02f.charTimers.filter(_0xc9b51b => _0xc9b51b.endWallTime <= _0x23865b).sort((_0x3e75e7, _0x2a190d) => _0x3e75e7.endWallTime - _0x2a190d.endWallTime);
-    if (!_0x304126.length) {
-      return;
-    }
-    const _0x558ca4 = _0x304126[0x0];
-    _0x29f102("Timer wygasł dla: \"" + _0x558ca4.name + "\" — startuję sekwencję");
-    _0x3c72f5();
-    _0x11b02f.charTimers = _0x11b02f.charTimers.filter(_0x312cc9 => _0x312cc9.id !== _0x558ca4.id);
-    _0x23a535();
-    _0x11b02f.charQueue = [_0x558ca4.id];
-    _0x11b02f.queueIndex = 0x0;
-    _0x11b02f.trainingStartedAt = null;
-    _0x1663b7(0x3, 0xbb8);
+
+  function checkExpiredTimers() {
+    const now = Date.now();
+    const expiredList = appState.charTimers
+      .filter(t => t.endWallTime <= now)
+      .sort((a, b) => a.endWallTime - b.endWallTime);
+
+    if (!expiredList.length) return;
+
+    const firstExpired = expiredList[0];
+    logTrainer(`Timer wygasł dla: "${firstExpired.name}" — startuję sekwencję`);
+    
+    stopMonitorMode();
+    appState.charTimers = appState.charTimers.filter(t => t.id !== firstExpired.id);
+    renderTimersList();
+
+    appState.charQueue = [firstExpired.id];
+    appState.queueIndex = 0;
+    appState.trainingStartedAt = null;
+    jumpToStep(3, 3000);
   }
-  function _0x3d3125(_0x373a52) {
-    const _0x257d88 = document.getElementById("tr-status-text");
-    if (_0x257d88) {
-      _0x257d88.textContent = _0x373a52;
-    }
-    const _0x38f3e5 = document.getElementById('tr-status-bar');
-    if (_0x38f3e5) {
-      _0x38f3e5.style.display = _0x373a52 ? 'flex' : "none";
-    }
+
+  function updateStatusText(text) {
+    const statusTextEl = document.getElementById("tr-status-text");
+    if (statusTextEl) statusTextEl.textContent = text;
+
+    const statusBarEl = document.getElementById('tr-status-bar');
+    if (statusBarEl) statusBarEl.style.display = text ? 'flex' : "none";
   }
-  function _0x2b7d5b(_0x318c5d) {
-    const _0x1a0cc3 = document.getElementById("tr-info");
-    if (_0x1a0cc3) {
-      _0x1a0cc3.textContent = _0x318c5d;
-    }
+
+  function updateInfoText(text) {
+    const infoEl = document.getElementById("tr-info");
+    if (infoEl) infoEl.textContent = text;
   }
-  function _0x2c8d92(_0x48dbb2) {
-    const _0x48dffc = document.getElementById('tr-settings');
-    if (_0x48dffc) {
-      _0x48dffc.style.display = _0x48dbb2 ? "none" : "block";
-    }
-    const _0x132b73 = document.getElementById('tr-settings-btn');
-    if (_0x132b73) {
-      _0x132b73.classList.toggle("tr-btn-active", !_0x48dbb2);
-    }
+
+  function toggleSettingsPanel(hide) {
+    const settingsEl = document.getElementById('tr-settings');
+    if (settingsEl) settingsEl.style.display = hide ? "none" : "block";
+
+    const settingsBtn = document.getElementById('tr-settings-btn');
+    if (settingsBtn) settingsBtn.classList.toggle("tr-btn-active", !hide);
   }
-  function _0x10b5df() {
+
+  /**
+   * Tworzy strukturę HTML i wstrzykuje style CSS dla panelu bocznego
+   */
+  function injectPanelUI() {
     if (!document.getElementById("tr-fonts")) {
-      const _0x1b1491 = document.createElement('link');
-      _0x1b1491.id = "tr-fonts";
-      _0x1b1491.rel = "stylesheet";
-      _0x1b1491.href = 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap';
-      document.head.appendChild(_0x1b1491);
+      const fontLink = document.createElement('link');
+      fontLink.id = "tr-fonts";
+      fontLink.rel = "stylesheet";
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap';
+      document.head.appendChild(fontLink);
     }
-    const _0xfea54f = document.createElement('style');
-    _0xfea54f.id = "tr-styles";
-    _0xfea54f.textContent = "\n      /* ── Reset scope ── */\n      #tr-panel, #tr-panel * { box-sizing: border-box; }\n\n      /* ── Fonts ── */\n      #tr-panel {\n        font-family: 'Rajdhani', sans-serif;\n      }\n      .tr-mono {\n        font-family: 'Share Tech Mono', monospace;\n      }\n\n      /* ── Panel ── */\n      #tr-panel {\n        position: fixed;\n        top: 60px;\n        right: 0;\n        width: 178px;\n        z-index: 9998;\n        background: rgba(9, 11, 16, 0.96);\n        border: 1px solid rgba(180, 140, 30, 0.35);\n        border-radius: 6px;\n        overflow: hidden;\n        box-shadow:\n          0 0 0 1px rgba(180,140,30,0.08),\n          0 8px 32px rgba(0,0,0,0.7),\n          inset 0 1px 0 rgba(255,220,80,0.06);\n        transition: box-shadow 0.2s;\n        user-select: none;\n      }\n      #tr-panel:hover {\n        box-shadow:\n          0 0 0 1px rgba(180,140,30,0.18),\n          0 8px 32px rgba(0,0,0,0.8),\n          inset 0 1px 0 rgba(255,220,80,0.08);\n      }\n\n      /* ── Header ── */\n      #tr-header {\n        display: flex;\n        align-items: center;\n        gap: 6px;\n        padding: 7px 8px 7px 10px;\n        background: rgba(180,140,30,0.07);\n        border-bottom: 1px solid rgba(180,140,30,0.18);\n        cursor: grab;\n      }\n      #tr-header:active { cursor: grabbing; }\n      #tr-drag-dots {\n        display: flex;\n        flex-direction: column;\n        gap: 2px;\n        opacity: 0.4;\n        flex-shrink: 0;\n        margin-right: 2px;\n      }\n      #tr-drag-dots span {\n        display: flex;\n        gap: 2px;\n      }\n      #tr-drag-dots i {\n        width: 2px; height: 2px;\n        border-radius: 50%;\n        background: #c9a227;\n        display: block;\n      }\n      #tr-title {\n        flex: 1;\n        font-family: 'Rajdhani', sans-serif;\n        font-weight: 600;\n        font-size: 11px;\n        letter-spacing: 2.5px;\n        color: #c9a227;\n        text-transform: uppercase;\n      }\n      .tr-hbtn {\n        width: 18px; height: 18px;\n        border: 1px solid rgba(180,140,30,0.25);\n        border-radius: 3px;\n        background: transparent;\n        color: rgba(180,140,30,0.5);\n        font-size: 11px;\n        line-height: 1;\n        cursor: pointer;\n        display: flex; align-items: center; justify-content: center;\n        transition: all 0.15s;\n        flex-shrink: 0;\n        padding: 0;\n      }\n      .tr-hbtn:hover {\n        background: rgba(180,140,30,0.12);\n        color: #c9a227;\n        border-color: rgba(180,140,30,0.5);\n      }\n      .tr-hbtn.tr-btn-active {\n        background: rgba(180,140,30,0.15);\n        color: #f0c040;\n        border-color: rgba(180,140,30,0.6);\n      }\n\n      /* Power indicator dot in header */\n      #tr-power-dot {\n        width: 7px; height: 7px;\n        border-radius: 50%;\n        background: #374151;\n        flex-shrink: 0;\n        transition: background 0.3s, box-shadow 0.3s;\n      }\n      #tr-power-dot.on {\n        background: #22c55e;\n        box-shadow: 0 0 6px rgba(34,197,94,0.7);\n        animation: tr-pulse 2s infinite;\n      }\n      #tr-power-dot.off {\n        background: #ef4444;\n        box-shadow: 0 0 4px rgba(239,68,68,0.4);\n      }\n      @keyframes tr-pulse {\n        0%, 100% { box-shadow: 0 0 6px rgba(34,197,94,0.7); }\n        50%       { box-shadow: 0 0 12px rgba(34,197,94,0.9); }\n      }\n\n      /* ── Body ── */\n      #tr-body { overflow: hidden; }\n\n      /* ── Settings ── */\n      #tr-settings {\n        padding: 10px 10px 8px;\n        border-bottom: 1px solid rgba(180,140,30,0.1);\n      }\n\n      .tr-field-label {\n        font-size: 9px;\n        font-weight: 600;\n        letter-spacing: 1.5px;\n        text-transform: uppercase;\n        color: rgba(180,140,30,0.5);\n        margin-bottom: 5px;\n      }\n\n      /* Stat radios — jedna kolumna */\n      #tr-stats {\n        display: flex;\n        flex-direction: column;\n        gap: 3px;\n        margin-bottom: 9px;\n      }\n      .tr-stat-label {\n        display: flex;\n        align-items: center;\n        gap: 5px;\n        cursor: pointer;\n        padding: 4px 5px;\n        border-radius: 4px;\n        border: 1px solid rgba(180,140,30,0.12);\n        transition: all 0.15s;\n        font-size: 11.5px;\n        font-weight: 500;\n        color: #6b7280;\n      }\n      .tr-stat-label:hover {\n        border-color: rgba(180,140,30,0.3);\n        color: #9ca3af;\n        background: rgba(180,140,30,0.05);\n      }\n      .tr-stat-label input { display: none; }\n      .tr-radio-dot {\n        width: 7px; height: 7px;\n        border-radius: 50%;\n        border: 1px solid #4b5563;\n        flex-shrink: 0;\n        transition: all 0.15s;\n        background: transparent;\n      }\n      .tr-stat-label input:checked ~ .tr-radio-dot {\n        background: #c9a227;\n        border-color: #c9a227;\n        box-shadow: 0 0 5px rgba(201,162,39,0.5);\n      }\n      .tr-stat-label input:checked ~ span {\n        color: #f0c040;\n      }\n      /* Wytrzymałość label spans full width */\n      .tr-stat-full { grid-column: 1 / -1; }\n\n      /* Inputs */\n      .tr-inputs { display: block; margin-bottom: 7px; }\n      .tr-input-wrap { width: 100%; }\n      .tr-input-wrap small {\n        display: block;\n        font-size: 8.5px;\n        letter-spacing: 1px;\n        text-transform: uppercase;\n        color: rgba(180,140,30,0.4);\n        margin-bottom: 2px;\n      }\n      #tr-panel input[type=\"number\"],\n      #tr-panel input[type=\"text\"] {\n        width: 100%;\n        padding: 4px 6px;\n        background: rgba(255,255,255,0.03);\n        border: 1px solid rgba(180,140,30,0.2);\n        border-radius: 4px;\n        color: #e5e7eb;\n        font-family: 'Rajdhani', sans-serif;\n        font-size: 12px;\n        outline: none;\n        transition: border-color 0.15s;\n      }\n      #tr-panel input[type=\"number\"]:focus,\n      #tr-panel input[type=\"text\"]:focus {\n        border-color: rgba(180,140,30,0.55);\n        background: rgba(180,140,30,0.04);\n      }\n      #tr-panel input::placeholder { color: #374151; }\n      /* Remove number input arrows */\n      #tr-panel input[type=\"number\"]::-webkit-inner-spin-button,\n      #tr-panel input[type=\"number\"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }\n\n      /* Main char toggle row */\n      #tr-main-toggle-row {\n        display: flex;\n        align-items: center;\n        justify-content: space-between;\n        padding: 5px 0;\n        margin-bottom: 7px;\n      }\n      #tr-main-toggle-row span {\n        font-size: 11.5px;\n        font-weight: 500;\n        color: #6b7280;\n      }\n      .tr-switch {\n        position: relative;\n        display: inline-block;\n        width: 30px; height: 16px;\n        flex-shrink: 0;\n      }\n      .tr-switch input { opacity: 0; width: 0; height: 0; }\n      .tr-track {\n        position: absolute; inset: 0;\n        background: rgba(255,255,255,0.07);\n        border: 1px solid rgba(180,140,30,0.2);\n        border-radius: 16px;\n        cursor: pointer;\n        transition: all 0.2s;\n      }\n      .tr-track:before {\n        content: '';\n        position: absolute;\n        width: 10px; height: 10px;\n        left: 2px; top: 2px;\n        border-radius: 50%;\n        background: #4b5563;\n        transition: all 0.2s;\n      }\n      .tr-switch input:checked + .tr-track {\n        background: rgba(201,162,39,0.2);\n        border-color: rgba(201,162,39,0.6);\n      }\n      .tr-switch input:checked + .tr-track:before {\n        background: #c9a227;\n        transform: translateX(14px);\n        box-shadow: 0 0 5px rgba(201,162,39,0.5);\n      }\n\n      /* Save button */\n      #tr-save {\n        width: 100%;\n        padding: 6px;\n        background: rgba(180,140,30,0.1);\n        border: 1px solid rgba(180,140,30,0.3);\n        border-radius: 4px;\n        color: #c9a227;\n        font-family: 'Rajdhani', sans-serif;\n        font-size: 11px;\n        font-weight: 600;\n        letter-spacing: 1.5px;\n        text-transform: uppercase;\n        cursor: pointer;\n        transition: all 0.15s;\n        margin-bottom: 6px;\n      }\n      #tr-save:hover {\n        background: rgba(180,140,30,0.2);\n        border-color: rgba(180,140,30,0.6);\n        color: #f0c040;\n      }\n      #tr-save:active {\n        background: rgba(180,140,30,0.28);\n        transform: translateY(1px);\n      }\n\n      /* Info text */\n      #tr-info {\n        font-size: 10.5px;\n        color: rgba(180,140,30,0.55);\n        min-height: 13px;\n        word-break: break-word;\n        line-height: 1.3;\n      }\n\n      /* ── Status bar ── */\n      #tr-status-bar {\n        display: none;\n        align-items: center;\n        gap: 6px;\n        padding: 5px 10px;\n        background: rgba(180,140,30,0.04);\n        border-bottom: 1px solid rgba(180,140,30,0.1);\n      }\n      #tr-status-dot-sm {\n        width: 5px; height: 5px;\n        border-radius: 50%;\n        background: #c9a227;\n        flex-shrink: 0;\n        animation: tr-pulse 1.5s infinite;\n      }\n      #tr-status-text {\n        font-family: 'Share Tech Mono', monospace;\n        font-size: 10px;\n        color: #c9a227;\n        letter-spacing: 0.5px;\n      }\n\n      /* ── Timer list ── */\n      #tr-timers {\n        padding: 8px 10px;\n      }\n      .tr-queue-label {\n        font-size: 9px;\n        font-weight: 600;\n        letter-spacing: 1.5px;\n        text-transform: uppercase;\n        color: rgba(180,140,30,0.4);\n        margin-bottom: 5px;\n      }\n      #tr-timer-list { display: flex; flex-direction: column; gap: 2px; }\n      .tr-timer-row {\n        display: flex;\n        justify-content: space-between;\n        align-items: center;\n        padding: 3px 5px;\n        border-radius: 3px;\n        border: 1px solid transparent;\n        transition: background 0.2s;\n      }\n      .tr-timer-row.tr-expired {\n        background: rgba(239,68,68,0.07);\n        border-color: rgba(239,68,68,0.15);\n      }\n      .tr-timer-name {\n        font-size: 11px;\n        font-weight: 500;\n        color: #9ca3af;\n        max-width: 80px;\n        overflow: hidden;\n        text-overflow: ellipsis;\n        white-space: nowrap;\n      }\n      .tr-timer-val {\n        font-family: 'Share Tech Mono', monospace;\n        font-size: 10px;\n        color: #22c55e;\n        white-space: nowrap;\n      }\n      .tr-timer-val.tr-blink {\n        color: #ef4444;\n        animation: tr-blink 0.7s step-end infinite;\n      }\n      @keyframes tr-blink {\n        0%, 100% { opacity: 1; }\n        50%       { opacity: 0.2; }\n      }\n      .tr-empty {\n        font-size: 10px;\n        color: #374151;\n        text-align: center;\n        padding: 4px 0;\n      }\n\n      /* ── Footer / power button ── */\n      #tr-footer {\n        display: flex;\n        align-items: center;\n        gap: 6px;\n        padding: 7px 10px;\n        border-top: 1px solid rgba(180,140,30,0.1);\n        background: rgba(0,0,0,0.2);\n      }\n      #tr-power {\n        flex: 1;\n        padding: 5px;\n        border-radius: 4px;\n        border: 1px solid rgba(239,68,68,0.35);\n        background: rgba(239,68,68,0.07);\n        color: #f87171;\n        font-family: 'Rajdhani', sans-serif;\n        font-size: 11px;\n        font-weight: 600;\n        letter-spacing: 2px;\n        text-transform: uppercase;\n        cursor: pointer;\n        transition: all 0.15s;\n      }\n      #tr-power:hover {\n        background: rgba(239,68,68,0.15);\n        border-color: rgba(239,68,68,0.55);\n      }\n      #tr-power.tr-power-on {\n        border-color: rgba(34,197,94,0.4);\n        background: rgba(34,197,94,0.08);\n        color: #4ade80;\n      }\n      #tr-power.tr-power-on:hover {\n        background: rgba(34,197,94,0.16);\n        border-color: rgba(34,197,94,0.6);\n      }\n      #tr-power:active { transform: translateY(1px); }\n\n      #tr-credits {\n        width: 16px; height: 16px;\n        border: 1px solid rgba(180,140,30,0.2);\n        border-radius: 50%;\n        background: transparent;\n        color: rgba(180,140,30,0.4);\n        font-size: 9px;\n        cursor: pointer;\n        display: flex; align-items: center; justify-content: center;\n        flex-shrink: 0;\n        transition: all 0.15s;\n        font-family: 'Rajdhani', sans-serif;\n        position: relative;\n      }\n      #tr-credits:hover {\n        color: #c9a227;\n        border-color: rgba(180,140,30,0.5);\n      }\n      #tr-credits-tip {\n        display: none;\n        position: absolute;\n        bottom: 20px;\n        right: 0;\n        width: 140px;\n        background: rgba(9,11,16,0.98);\n        border: 1px solid rgba(180,140,30,0.3);\n        border-radius: 4px;\n        padding: 6px 8px;\n        font-family: 'Share Tech Mono', monospace;\n        font-size: 9px;\n        color: rgba(180,140,30,0.7);\n        white-space: normal;\n        line-height: 1.5;\n        pointer-events: none;\n        z-index: 99999;\n      }\n      #tr-credits:hover #tr-credits-tip { display: block; }\n\n      /* ── Minimize state ── */\n      #tr-panel.tr-minimized #tr-body { display: none; }\n      #tr-panel.tr-minimized #tr-footer { display: none; }\n      #tr-panel.tr-minimized { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }\n    ";
-    document.head.appendChild(_0xfea54f);
-    const _0x4c130d = _0x54266d.map(({
-      value: _0x550028,
-      label: _0x1d2ca9
-    }) => "\n      <label class=\"tr-stat-label\">\n        <input type=\"radio\" name=\"tr-stat\" value=\"" + _0x550028 + "\" />\n        <span class=\"tr-radio-dot\"></span>\n        <span>" + _0x1d2ca9 + "</span>\n      </label>").join('');
-    const _0x296598 = "\n      <div id=\"tr-panel\">\n\n        <!-- Header -->\n        <div id=\"tr-header\">\n          <div id=\"tr-drag-dots\">\n            <span><i></i><i></i><i></i></span>\n            <span><i></i><i></i><i></i></span>\n          </div>\n          <span id=\"tr-title\">Trainer</span>\n          <div id=\"tr-power-dot\" class=\"off\"></div>\n          <button class=\"tr-hbtn tr-btn-active\" id=\"tr-settings-btn\" title=\"Ustawienia\">⚙</button>\n          <button class=\"tr-hbtn\" id=\"tr-minimize-btn\" title=\"Minimalizuj\">−</button>\n        </div>\n\n        <!-- Body -->\n        <div id=\"tr-body\">\n\n          <!-- Settings -->\n          <div id=\"tr-settings\">\n            <div class=\"tr-field-label\">Statystyka</div>\n            <div id=\"tr-stats\">" + _0x4c130d + "</div>\n\n            <div class=\"tr-inputs\">\n              <div class=\"tr-input-wrap\">\n                <small>Czas (h)</small>\n                <input type=\"number\" id=\"tr-duration\" placeholder=\"2\" min=\"1\" />\n              </div>\n              <div class=\"tr-input-wrap\" style=\"margin-top:5px;\">\n                <small>Nicki</small>\n                <input type=\"text\" id=\"tr-nicks\" placeholder=\"A;B\" />\n              </div>\n            </div>\n\n            <div id=\"tr-main-toggle-row\">\n              <span>Główna postać</span>\n              <label class=\"tr-switch\">\n                <input type=\"checkbox\" id=\"tr-main-toggle\" />\n                <span class=\"tr-track\"></span>\n              </label>\n            </div>\n\n            <button id=\"tr-save\">Zapisz</button>\n            <div id=\"tr-info\"></div>\n          </div>\n\n          <!-- Status bar -->\n          <div id=\"tr-status-bar\">\n            <div id=\"tr-status-dot-sm\"></div>\n            <span id=\"tr-status-text\" class=\"tr-mono\"></span>\n          </div>\n\n          <!-- Timer list -->\n          <div id=\"tr-timers\" style=\"display:none;\">\n            <div class=\"tr-queue-label\">Kolejka</div>\n            <div id=\"tr-timer-list\"></div>\n          </div>\n\n        </div>\n\n        <!-- Footer -->\n        <div id=\"tr-footer\">\n          <button id=\"tr-power\">■ OFF</button>\n          <div id=\"tr-credits\">?<div id=\"tr-credits-tip\">" + "Created by yasoen for Tralalelu" + "</div></div>\n        </div>\n\n      </div>\n    ";
-    document.body.insertAdjacentHTML("beforeend", _0x296598);
-    const _0x4bdf65 = document.getElementById("tr-panel");
-    const _0x24316e = document.getElementById("tr-header");
-    let _0x3a5d14 = false;
-    let _0x1a40d7 = 0x0;
-    let _0x566b00 = 0x0;
-    _0x24316e.addEventListener("mousedown", _0x4ef6c3 => {
-      if (_0x4ef6c3.target.closest("button, .tr-hbtn")) {
-        return;
+
+    const styleEl = document.createElement('style');
+    styleEl.id = "tr-styles";
+    styleEl.textContent = `
+      #tr-panel, #tr-panel * { box-sizing: border-box; }
+      #tr-panel { font-family: 'Rajdhani', sans-serif; }
+      .tr-mono { font-family: 'Share Tech Mono', monospace; }
+
+      #tr-panel {
+        position: fixed; top: 60px; right: 0; width: 178px; z-index: 9998;
+        background: rgba(9, 11, 16, 0.96);
+        border: 1px solid rgba(180, 140, 30, 0.35);
+        border-radius: 6px; overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(180,140,30,0.08), 0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,220,80,0.06);
+        transition: box-shadow 0.2s; user-select: none;
       }
-      _0x3a5d14 = true;
-      _0x4bdf65.style.right = 'auto';
-      _0x1a40d7 = _0x4ef6c3.clientX - _0x4bdf65.getBoundingClientRect().left;
-      _0x566b00 = _0x4ef6c3.clientY - _0x4bdf65.getBoundingClientRect().top;
-      _0x4ef6c3.preventDefault();
-    });
-    document.addEventListener('mousemove', _0x10bcff => {
-      if (!_0x3a5d14) {
-        return;
+      #tr-panel:hover {
+        box-shadow: 0 0 0 1px rgba(180,140,30,0.18), 0 8px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,220,80,0.08);
       }
-      let _0x16f77b = _0x10bcff.clientX - _0x1a40d7;
-      let _0x37718b = _0x10bcff.clientY - _0x566b00;
-      _0x16f77b = Math.max(0x0, Math.min(window.innerWidth - _0x4bdf65.offsetWidth, _0x16f77b));
-      _0x37718b = Math.max(0x0, Math.min(window.innerHeight - _0x4bdf65.offsetHeight, _0x37718b));
-      _0x4bdf65.style.left = _0x16f77b + 'px';
-      _0x4bdf65.style.top = _0x37718b + 'px';
+
+      #tr-header {
+        display: flex; align-items: center; gap: 6px; padding: 7px 8px 7px 10px;
+        background: rgba(180,140,30,0.07); border-bottom: 1px solid rgba(180,140,30,0.18);
+        cursor: grab;
+      }
+      #tr-header:active { cursor: grabbing; }
+      #tr-drag-dots { display: flex; flex-direction: column; gap: 2px; opacity: 0.4; flex-shrink: 0; margin-right: 2px; }
+      #tr-drag-dots span { display: flex; gap: 2px; }
+      #tr-drag-dots i { width: 2px; height: 2px; border-radius: 50%; background: #c9a227; display: block; }
+      #tr-title { flex: 1; font-weight: 600; font-size: 11px; letter-spacing: 2.5px; color: #c9a227; text-transform: uppercase; }
+      
+      .tr-hbtn {
+        width: 18px; height: 18px; border: 1px solid rgba(180,140,30,0.25); border-radius: 3px;
+        background: transparent; color: rgba(180,140,30,0.5); font-size: 11px; line-height: 1;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s; flex-shrink: 0; padding: 0;
+      }
+      .tr-hbtn:hover { background: rgba(180,140,30,0.12); color: #c9a227; border-color: rgba(180,140,30,0.5); }
+      .tr-hbtn.tr-btn-active { background: rgba(180,140,30,0.15); color: #f0c040; border-color: rgba(180,140,30,0.6); }
+
+      #tr-power-dot {
+        width: 7px; height: 7px; border-radius: 50%; background: #374151; flex-shrink: 0;
+        transition: background 0.3s, box-shadow 0.3s;
+      }
+      #tr-power-dot.on { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.7); animation: tr-pulse 2s infinite; }
+      #tr-power-dot.off { background: #ef4444; box-shadow: 0 0 4px rgba(239,68,68,0.4); }
+      @keyframes tr-pulse { 0%, 100% { box-shadow: 0 0 6px rgba(34,197,94,0.7); } 50% { box-shadow: 0 0 12px rgba(34,197,94,0.9); } }
+
+      #tr-body { overflow: hidden; }
+      #tr-settings { padding: 10px 10px 8px; border-bottom: 1px solid rgba(180,140,30,0.1); }
+      .tr-field-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(180,140,30,0.5); margin-bottom: 5px; }
+
+      #tr-stats { display: flex; flex-direction: column; gap: 3px; margin-bottom: 9px; }
+      .tr-stat-label {
+        display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 4px 5px;
+        border-radius: 4px; border: 1px solid rgba(180,140,30,0.12); transition: all 0.15s;
+        font-size: 11.5px; font-weight: 500; color: #6b7280;
+      }
+      .tr-stat-label:hover { border-color: rgba(180,140,30,0.3); color: #9ca3af; background: rgba(180,140,30,0.05); }
+      .tr-stat-label input { display: none; }
+      .tr-radio-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #4b5563; flex-shrink: 0; transition: all 0.15s; background: transparent; }
+      .tr-stat-label input:checked ~ .tr-radio-dot { background: #c9a227; border-color: #c9a227; box-shadow: 0 0 5px rgba(201,162,39,0.5); }
+      .tr-stat-label input:checked ~ span { color: #f0c040; }
+
+      .tr-inputs { display: block; margin-bottom: 7px; }
+      .tr-input-wrap { width: 100%; }
+      .tr-input-wrap small { display: block; font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: rgba(180,140,30,0.4); margin-bottom: 2px; }
+      #tr-panel input[type="number"], #tr-panel input[type="text"] {
+        width: 100%; padding: 4px 6px; background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(180,140,30,0.2); border-radius: 4px; color: #e5e7eb;
+        font-family: 'Rajdhani', sans-serif; font-size: 12px; outline: none; transition: border-color 0.15s;
+      }
+      #tr-panel input[type="number"]:focus, #tr-panel input[type="text"]:focus { border-color: rgba(180,140,30,0.55); background: rgba(180,140,30,0.04); }
+      #tr-panel input::placeholder { color: #374151; }
+      #tr-panel input[type="number"]::-webkit-inner-spin-button, #tr-panel input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+      #tr-main-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; margin-bottom: 7px; }
+      #tr-main-toggle-row span { font-size: 11.5px; font-weight: 500; color: #6b7280; }
+      .tr-switch { position: relative; display: inline-block; width: 30px; height: 16px; flex-shrink: 0; }
+      .tr-switch input { opacity: 0; width: 0; height: 0; }
+      .tr-track { position: absolute; inset: 0; background: rgba(255,255,255,0.07); border: 1px solid rgba(180,140,30,0.2); border-radius: 16px; cursor: pointer; transition: all 0.2s; }
+      .tr-track:before { content: ''; position: absolute; width: 10px; height: 10px; left: 2px; top: 2px; border-radius: 50%; background: #4b5563; transition: all 0.2s; }
+      .tr-switch input:checked + .tr-track { background: rgba(201,162,39,0.2); border-color: rgba(201,162,39,0.6); }
+      .tr-switch input:checked + .tr-track:before { background: #c9a227; transform: translateX(14px); box-shadow: 0 0 5px rgba(201,162,39,0.5); }
+
+      #tr-save {
+        width: 100%; padding: 6px; background: rgba(180,140,30,0.1); border: 1px solid rgba(180,140,30,0.3);
+        border-radius: 4px; color: #c9a227; font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+        text-transform: uppercase; cursor: pointer; transition: all 0.15s; margin-bottom: 6px;
+      }
+      #tr-save:hover { background: rgba(180,140,30,0.2); border-color: rgba(180,140,30,0.6); color: #f0c040; }
+      #tr-save:active { background: rgba(180,140,30,0.28); transform: translateY(1px); }
+
+      #tr-info { font-size: 10.5px; color: rgba(180,140,30,0.55); min-height: 13px; word-break: break-word; line-height: 1.3; }
+
+      #tr-status-bar { display: none; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(180,140,30,0.04); border-bottom: 1px solid rgba(180,140,30,0.1); }
+      #tr-status-dot-sm { width: 5px; height: 5px; border-radius: 50%; background: #c9a227; flex-shrink: 0; animation: tr-pulse 1.5s infinite; }
+      #tr-status-text { font-size: 10px; color: #c9a227; letter-spacing: 0.5px; }
+
+      #tr-timers { padding: 8px 10px; }
+      .tr-queue-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(180,140,30,0.4); margin-bottom: 5px; }
+      #tr-timer-list { display: flex; flex-direction: column; gap: 2px; }
+      .tr-timer-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 5px; border-radius: 3px; border: 1px solid transparent; transition: background 0.2s; }
+      .tr-timer-row.tr-expired { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.15); }
+      .tr-timer-name { font-size: 11px; font-weight: 500; color: #9ca3af; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tr-timer-val { font-size: 10px; color: #22c55e; white-space: nowrap; }
+      .tr-timer-val.tr-blink { color: #ef4444; animation: tr-blink 0.7s step-end infinite; }
+      @keyframes tr-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+      .tr-empty { font-size: 10px; color: #374151; text-align: center; padding: 4px 0; }
+
+      #tr-footer { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-top: 1px solid rgba(180,140,30,0.1); background: rgba(0,0,0,0.2); }
+      #tr-power {
+        flex: 1; padding: 5px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.35);
+        background: rgba(239,68,68,0.07); color: #f87171; font-size: 11px; font-weight: 600;
+        letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+      }
+      #tr-power:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.55); }
+      #tr-power.tr-power-on { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); color: #4ade80; }
+      #tr-power.tr-power-on:hover { background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.6); }
+      #tr-power:active { transform: translateY(1px); }
+
+      #tr-credits {
+        width: 16px; height: 16px; border: 1px solid rgba(180,140,30,0.2); border-radius: 50%;
+        background: transparent; color: rgba(180,140,30,0.4); font-size: 9px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s;
+        position: relative;
+      }
+      #tr-credits:hover { color: #c9a227; border-color: rgba(180,140,30,0.5); }
+      #tr-credits-tip {
+        display: none; position: absolute; bottom: 20px; right: 0; width: 140px;
+        background: rgba(9,11,16,0.98); border: 1px solid rgba(180,140,30,0.3); border-radius: 4px;
+        padding: 6px 8px; font-size: 9px; color: rgba(180,140,30,0.7); white-space: normal; line-height: 1.5; pointer-events: none; z-index: 99999;
+      }
+      #tr-credits:hover #tr-credits-tip { display: block; }
+
+      #tr-panel.tr-minimized #tr-body, #tr-panel.tr-minimized #tr-footer { display: none; }
+      #tr-panel.tr-minimized { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+    `;
+    document.head.appendChild(styleEl);
+
+    const radioOptionsHtml = STATS_OPTIONS.map(({ value, label }) => `
+      <label class="tr-stat-label">
+        <input type="radio" name="tr-stat" value="${value}" />
+        <span class="tr-radio-dot"></span>
+        <span>${label}</span>
+      </label>`).join('');
+
+    const panelHtml = `
+      <div id="tr-panel">
+        <div id="tr-header">
+          <div id="tr-drag-dots">
+            <span><i></i><i></i><i></i></span>
+            <span><i></i><i></i><i></i></span>
+          </div>
+          <span id="tr-title">Trainer</span>
+          <div id="tr-power-dot" class="off"></div>
+          <button class="tr-hbtn tr-btn-active" id="tr-settings-btn" title="Ustawienia">⚙</button>
+          <button class="tr-hbtn" id="tr-minimize-btn" title="Minimalizuj">−</button>
+        </div>
+
+        <div id="tr-body">
+          <div id="tr-settings">
+            <div class="tr-field-label">Statystyka</div>
+            <div id="tr-stats">${radioOptionsHtml}</div>
+
+            <div class="tr-inputs">
+              <div class="tr-input-wrap">
+                <small>Czas (h)</small>
+                <input type="number" id="tr-duration" placeholder="2" min="1" />
+              </div>
+              <div class="tr-input-wrap" style="margin-top:5px;">
+                <small>Nicki</small>
+                <input type="text" id="tr-nicks" placeholder="A;B" />
+              </div>
+            </div>
+
+            <div id="tr-main-toggle-row">
+              <span>Główna postać</span>
+              <label class="tr-switch">
+                <input type="checkbox" id="tr-main-toggle" />
+                <span class="tr-track"></span>
+              </label>
+            </div>
+
+            <button id="tr-save">Zapisz</button>
+            <div id="tr-info"></div>
+          </div>
+
+          <div id="tr-status-bar">
+            <div id="tr-status-dot-sm"></div>
+            <span id="tr-status-text" class="tr-mono"></span>
+          </div>
+
+          <div id="tr-timers" style="display:none;">
+            <div class="tr-queue-label">Kolejka</div>
+            <div id="tr-timer-list"></div>
+          </div>
+        </div>
+
+        <div id="tr-footer">
+          <button id="tr-power">■ OFF</button>
+          <div id="tr-credits">?<div id="tr-credits-tip">Created by yasoen for Tralalelu</div></div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", panelHtml);
+
+    // Obsługa przeciągania panelu (Drag and Drop)
+    const panelEl = document.getElementById("tr-panel");
+    const headerEl = document.getElementById("tr-header");
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    headerEl.addEventListener("mousedown", (e) => {
+      if (e.target.closest("button, .tr-hbtn")) return;
+      isDragging = true;
+      panelEl.style.right = 'auto';
+      offsetX = e.clientX - panelEl.getBoundingClientRect().left;
+      offsetY = e.clientY - panelEl.getBoundingClientRect().top;
+      e.preventDefault();
     });
-    document.addEventListener("mouseup", () => {
-      _0x3a5d14 = false;
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      let left = e.clientX - offsetX;
+      let top = e.clientY - offsetY;
+      left = Math.max(0, Math.min(window.innerWidth - panelEl.offsetWidth, left));
+      top = Math.max(0, Math.min(window.innerHeight - panelEl.offsetHeight, top));
+      panelEl.style.left = left + 'px';
+      panelEl.style.top = top + 'px';
     });
+
+    document.addEventListener("mouseup", () => { isDragging = false; });
+
     document.getElementById('tr-minimize-btn').addEventListener('click', () => {
-      const _0x2f60f9 = _0x4bdf65.classList.toggle("tr-minimized");
-      document.getElementById('tr-minimize-btn').textContent = _0x2f60f9 ? '+' : '−';
+      const isMinimized = panelEl.classList.toggle("tr-minimized");
+      document.getElementById('tr-minimize-btn').textContent = isMinimized ? '+' : '−';
     });
+
     document.getElementById('tr-settings-btn').addEventListener('click', () => {
-      const _0x2a08b7 = document.getElementById('tr-settings');
-      const _0x21acf8 = _0x2a08b7.style.display !== "none";
-      _0x2a08b7.style.display = _0x21acf8 ? "none" : "block";
-      document.getElementById('tr-settings-btn').classList.toggle("tr-btn-active", !_0x21acf8);
+      const settingsEl = document.getElementById('tr-settings');
+      const isVisible = settingsEl.style.display !== "none";
+      settingsEl.style.display = isVisible ? "none" : "block";
+      document.getElementById('tr-settings-btn').classList.toggle("tr-btn-active", !isVisible);
     });
-    document.getElementById("tr-save").addEventListener('click', _0x2e0cfc);
-    document.getElementById("tr-power").addEventListener('click', _0x3fa4af);
+
+    document.getElementById("tr-save").addEventListener('click', handleSaveButtonClick);
+    document.getElementById("tr-power").addEventListener('click', handlePowerButtonClick);
   }
-  function _0x2e0cfc() {
-    const _0x4f54a0 = document.querySelector("input[name=\"tr-stat\"]:checked")?.["value"];
-    const _0x3d801e = document.getElementById("tr-duration").value.trim();
-    const _0xd0b2b = document.getElementById('tr-nicks').value.split(';').map(_0x4d168a => _0x4d168a.trim()).filter(_0x55c9aa => _0x55c9aa.length > 0x0);
-    const _0x13805f = document.getElementById('tr-main-toggle').checked;
-    if (!_0x4f54a0) {
-      _0x2b7d5b("⚠ Wybierz statystykę.");
+
+  function handleSaveButtonClick() {
+    const selectedStat = document.querySelector('input[name="tr-stat"]:checked')?.value;
+    const durationVal = document.getElementById("tr-duration").value.trim();
+    const nicksList = document.getElementById('tr-nicks').value
+      .split(';')
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+    const includeMain = document.getElementById('tr-main-toggle').checked;
+
+    if (!selectedStat) {
+      updateInfoText("⚠ Wybierz statystykę.");
       return;
     }
-    if (!_0x3d801e || isNaN(+_0x3d801e)) {
-      _0x2b7d5b("⚠ Podaj czas treningu.");
+    if (!durationVal || isNaN(+durationVal)) {
+      updateInfoText("⚠ Podaj czas treningu.");
       return;
     }
-    _0x11b02f.stat = _0x4f54a0;
-    _0x11b02f.duration = _0x3d801e;
-    _0x11b02f.allowedNicks = _0xd0b2b;
-    _0x11b02f.includeMainChar = _0x13805f;
-    const _0x2d0e19 = _0x54266d.find(_0x1fc6d2 => _0x1fc6d2.value === _0x4f54a0)?.["label"] ?? _0x4f54a0;
-    const _0x5e7cbf = _0xd0b2b.length > 0x0 ? _0xd0b2b.join(", ") : "wszyscy";
-    const _0x380bad = _0x13805f ? " +główna" : '';
-    _0x29f102('Konfiguracja:', {
-      'stat': _0x4f54a0,
-      'duration': _0x3d801e,
-      'allowedNicks': _0xd0b2b,
-      'includeMainChar': _0x13805f
+
+    appState.stat = selectedStat;
+    appState.duration = durationVal;
+    appState.allowedNicks = nicksList;
+    appState.includeMainChar = includeMain;
+
+    const statLabel = STATS_OPTIONS.find(opt => opt.value === selectedStat)?.label ?? selectedStat;
+    const nicksStr = nicksList.length > 0 ? nicksList.join(", ") : "wszyscy";
+    const mainStr = includeMain ? " +główna" : '';
+
+    logTrainer('Konfiguracja:', {
+      stat: selectedStat,
+      duration: durationVal,
+      allowedNicks: nicksList,
+      includeMainChar: includeMain
     });
-    _0x2b7d5b("✓ " + _0x2d0e19 + " · " + _0x3d801e + "h · " + _0x5e7cbf + _0x380bad);
-    _0x3c7abb();
+
+    updateInfoText(`✓ ${statLabel} · ${durationVal}h · ${nicksStr}${mainStr}`);
+    saveSettingsToLocalStorage();
   }
-  function _0x3fa4af() {
-    _0x11b02f.running = true;
-    const _0x2d077c = document.getElementById("tr-power");
-    const _0x358945 = document.getElementById("tr-power-dot");
-    _0x2d077c.textContent = "■ OFF";
-    _0x2d077c.classList.remove("tr-power-on");
-    _0x358945.className = "off";
-    _0x2c8d92(false);
-    _0xad1cdc();
-    _0x3c72f5();
-    _0x3d3125('');
-    _0x29f102('Stop');
+
+  function handlePowerButtonClick() {
+    appState.running = true;
+    const powerBtn = document.getElementById("tr-power");
+    const powerDot = document.getElementById("tr-power-dot");
+
+    powerBtn.textContent = "■ OFF";
+    powerBtn.classList.remove("tr-power-on");
+    powerDot.className = "off";
+
+    toggleSettingsPanel(false);
+    clearCountdown();
+    stopMonitorMode();
+    updateStatusText('');
+    logTrainer('Stop');
   }
-  const _0x289aba = [_0x275a96, _0x4ac567, _0x5a7854, _0x34f5b9, _0x1174a5, _0x3bf3cb, _0x41b567, _0x4848bd, _0x253fdc, _0x4d208e, _0x190384];
-  function _0x2715df() {
-    return;
+
+  // Lista funkcji wchodzących w skład kroków wykonywania treningu
+  const trainingSequenceSteps = [
+    stepWaitForMinute,
+    stepFetchRented,
+    stepBuildQueue,
+    stepSwitchChar,
+    stepCheckSSJ,
+    stepStartTraining,
+    stepUseCode,
+    stepLogoutChar,
+    stepScanChar,
+    stepReadTimer,
+    stepFinishScan
+  ];
+
+  function executeCurrentStep() {
     if (GAME.is_loading) {
-      return _0x3a8efc(_0x2715df);
+      return delayCall(executeCurrentStep);
     }
-    const _0x5ebec9 = _0x289aba[0x0];
-    if (_0x5ebec9) {
-      _0x5ebec9();
-    }
+    const stepFn = trainingSequenceSteps[0];
+    if (stepFn) stepFn();
   }
-  function _0x5d502e(_0x444429 = 0xbb8) {
-    0x0++;
-    _0x3a8efc(_0x2715df, _0x444429);
+
+  function nextStep(delayMs = 3000) {
+    delayCall(executeCurrentStep, delayMs);
   }
-  function _0x1663b7(_0x10b12b, _0xaae218 = 0xbb8) {
-    _0x11b02f.step = _0x10b12b;
-    _0x3a8efc(_0x2715df, _0xaae218);
+
+  function jumpToStep(stepIndex, delayMs = 3000) {
+    appState.step = stepIndex;
+    delayCall(executeCurrentStep, delayMs);
   }
-  function _0x275a96() {
-    const _0x4a412a = _0x5e738c();
-    if (_0x4a412a >= 0x2) {
-      _0x5d502e();
+
+  function stepWaitForMinute() {
+    const currentMinute = getServerMinute();
+    if (currentMinute >= 2) {
+      nextStep();
       return;
     }
-    _0x29f102("Minuta serwera: " + _0x4a412a + " — oczekiwanie");
-    GAME.socket.emit('ga', {
-      'a': 0x2,
-      'char_id': null
-    });
-    _0x3a8efc(_0x2d92d0, 0x2710);
+    logTrainer("Minuta serwera: " + currentMinute + " — oczekiwanie");
+    GAME.socket.emit('ga', { a: 2, char_id: null });
+    delayCall(checkMinuteLoop, 10000);
   }
-  function _0x2d92d0() {
-    if (_0x5e738c() >= 0x2) {
-      _0x5d502e();
+
+  function checkMinuteLoop() {
+    if (getServerMinute() >= 2) {
+      nextStep();
     } else {
-      _0x3a8efc(_0x2d92d0, 0x2710);
+      delayCall(checkMinuteLoop, 10000);
     }
   }
-  function _0x4ac567() {
-    GAME.socket.emit('ga', _0x156b3d.GET_RENTED);
-    _0x5d502e();
+
+  function stepFetchRented() {
+    GAME.socket.emit('ga', SOCKET_COMMANDS.GET_RENTED);
+    nextStep();
   }
-  function _0x5a7854() {
-    const _0x514e8e = _0xf33580();
-    const _0x2d77dc = _0x11b02f.allowedNicks.length > 0x0 ? _0x514e8e.filter(_0x53e380 => _0x11b02f.allowedNicks.some(_0x196d31 => _0x196d31.toLowerCase() === _0x53e380.name.toLowerCase())) : _0x514e8e;
-    const _0x2be80e = {};
-    _0x2d77dc.forEach(_0x495e78 => {
-      _0x2be80e[_0x495e78.id] = _0x495e78.name;
+
+  function stepBuildQueue() {
+    const rented = getRentedCharacters();
+    const filteredRented = appState.allowedNicks.length > 0
+      ? rented.filter(char => appState.allowedNicks.some(nick => nick.toLowerCase() === char.name.toLowerCase()))
+      : rented;
+
+    const namesMap = {};
+    filteredRented.forEach(char => {
+      namesMap[char.id] = char.name;
     });
-    if (false && null) {
-      _0x2be80e[null] = null || "#null";
+
+    appState.charQueue = filterQueueIds(filteredRented);
+    appState.charNames = { ...appState.charNames, ...namesMap };
+    appState.queueIndex = 0;
+
+    logTrainer("Kolejka:", appState.charQueue.map(id => (appState.charNames[id] || id) + '(' + id + ')'));
+
+    if (appState.allowedNicks.length > 0 && filteredRented.length === 0) {
+      updateInfoText("⚠ Nie znaleziono podanych postaci.");
     }
-    _0x11b02f.charQueue = _0x214ceb(_0x2d77dc);
-    _0x11b02f.charNames = {
-      ..._0x11b02f.charNames,
-      ..._0x2be80e
-    };
-    _0x11b02f.queueIndex = 0x0;
-    _0x29f102("Kolejka:", _0x11b02f.charQueue.map(_0x386263 => (_0x11b02f.charNames[_0x386263] || _0x386263) + '(' + _0x386263 + ')'));
-    if (_0x11b02f.allowedNicks.length > 0x0 && _0x2d77dc.length === 0x0 && true) {
-      _0x2b7d5b("⚠ Nie znaleziono podanych postaci.");
-    }
-    _0x5d502e();
+    nextStep();
   }
-  function _0x34f5b9() {
-    const {
-      charQueue: _0x2a5df3,
-      queueIndex: _0x4ee87c
-    } = _0x11b02f;
-    if (_0x4ee87c >= _0x2a5df3.length) {
-      _0x29f102("⚠ Pusta kolejka");
-      _0x1663b7(0x0);
+
+  function stepSwitchChar() {
+    const { charQueue, queueIndex } = appState;
+    if (queueIndex >= charQueue.length) {
+      logTrainer("⚠ Pusta kolejka");
+      jumpToStep(0);
       return;
     }
-    const _0x3ee83d = _0x2a5df3[_0x4ee87c];
-    _0x29f102("[Trening] " + (_0x4ee87c + 0x1) + '/' + _0x2a5df3.length + ": " + (_0x11b02f.charNames[_0x3ee83d] || _0x3ee83d));
-    GAME.socket.emit('ga', {
-      'a': 0x27,
-      'type': 0x30,
-      'target': _0x3ee83d
-    });
-    0x0++;
-    _0x5d502e();
+    const targetCharId = charQueue[queueIndex];
+    logTrainer(`[Trening] ${queueIndex + 1}/${charQueue.length}: ${appState.charNames[targetCharId] || targetCharId}`);
+
+    GAME.socket.emit('ga', { a: 39, type: 48, target: targetCharId });
+    nextStep();
   }
-  function _0x1174a5() {
-    const {
-      ssj: _0x3690f1
-    } = GAME.quick_opts ?? {};
-    if (!_0x3690f1 || GAME.char_data.reborn < 0x4) {
-      _0x5d502e();
+
+  function stepCheckSSJ() {
+    const { ssj } = GAME.quick_opts ?? {};
+    if (!ssj || GAME.char_data.reborn < 4) {
+      nextStep();
       return;
     }
-    const _0x1e2d2c = $("#ssj_bar")[0x0]?.["attributes"][0x2]?.["value"] === "display: none;";
-    if (_0x1e2d2c) {
-      GAME.socket.emit('ga', {
-        'a': 0x12,
-        'type': 0x5,
-        'tech_id': _0x3690f1[0x0]
-      });
-      _0x3a8efc(_0x2715df);
+
+    const isSSJHidden = $("#ssj_bar")[0]?.attributes[2]?.value === "display: none;";
+    if (isSSJHidden) {
+      GAME.socket.emit('ga', { a: 18, type: 5, tech_id: ssj[0] });
+      delayCall(executeCurrentStep);
       return;
     }
+
     if ($('#ssj_status').text() === "--:--:--") {
-      GAME.socket.emit('ga', _0x156b3d.SSJ_STOP);
-      _0x3a8efc(_0x1174a5);
+      GAME.socket.emit('ga', SOCKET_COMMANDS.SSJ_STOP);
+      delayCall(stepCheckSSJ);
     } else {
-      _0x5d502e();
+      nextStep();
     }
   }
-  function _0x3bf3cb() {
+
+  function stepStartTraining() {
     if (GAME.is_training) {
-      _0x5d502e();
+      nextStep();
       return;
     }
-    _0x11b02f.trainingStartedAt = Date.now();
-    _0x29f102("Trening startuje o " + new Date().toLocaleTimeString());
-    GAME.socket.emit('ga', {
-      'a': 0x8,
-      'type': 0x2,
-      'stat': null,
-      'duration': null
-    });
-    _0x5d502e();
+    appState.trainingStartedAt = Date.now();
+    logTrainer("Trening startuje o " + new Date().toLocaleTimeString());
+    GAME.socket.emit('ga', { a: 8, type: 2, stat: null, duration: null });
+    nextStep();
   }
-  function _0x41b567() {
-    const _0x14409d = GAME.is_training && GAME.char_data.train_ucd - GAME.getTime() <= 0x0;
-    if (_0x14409d) {
-      GAME.socket.emit('ga', _0x156b3d.TRAINING_CODE);
+
+  function stepUseCode() {
+    const isFinished = GAME.is_training && GAME.char_data.train_ucd - GAME.getTime() <= 0;
+    if (isFinished) {
+      GAME.socket.emit('ga', SOCKET_COMMANDS.TRAINING_CODE);
     }
-    _0x5d502e();
+    nextStep();
   }
-  function _0x4848bd() {
-    GAME.socket.emit('ga', {
-      'a': 0x2,
-      'char_id': null
-    });
-    if (0x0 < _0x11b02f.charQueue.length) {
-      _0x29f102("Wylogowano, następna za 15s");
-      _0x1663b7(0x3, 0x3a98);
+
+  function stepLogoutChar() {
+    GAME.socket.emit('ga', { a: 2, char_id: null });
+    if (0 < appState.charQueue.length) {
+      logTrainer("Wylogowano, następna za 15s");
+      jumpToStep(3, 15000);
       return;
     }
-    _0x29f102("Runda treningowa zakończona → runda skanująca");
-    _0x11b02f.queueIndex = 0x0;
-    _0x1663b7(0x8, 0x3a98);
+    logTrainer("Runda treningowa zakończona → runda skanująca");
+    appState.queueIndex = 0;
+    jumpToStep(8, 15000);
   }
-  function _0x253fdc() {
-    const {
-      charQueue: _0x498c6c,
-      queueIndex: _0x154928
-    } = _0x11b02f;
-    if (_0x154928 >= _0x498c6c.length) {
-      _0x3a8efc(_0x3862c9, 0x3a98);
+
+  function stepScanChar() {
+    const { charQueue, queueIndex } = appState;
+    if (queueIndex >= charQueue.length) {
+      delayCall(startMonitorMode, 15000);
       return;
     }
-    const _0x28e8f2 = _0x498c6c[_0x154928];
-    _0x29f102("[Skan] " + (_0x154928 + 0x1) + '/' + _0x498c6c.length + ": " + (_0x11b02f.charNames[_0x28e8f2] || _0x28e8f2));
-    _0x3d3125("SKAN  " + (_0x154928 + 0x1) + '/' + _0x498c6c.length);
-    GAME.socket.emit('ga', {
-      'a': 0x27,
-      'type': 0x30,
-      'target': _0x28e8f2
-    });
-    0x0++;
-    _0x5d502e();
+    const charId = charQueue[queueIndex];
+    logTrainer(`[Skan] ${queueIndex + 1}/${charQueue.length}: ${appState.charNames[charId] || charId}`);
+    updateStatusText(`SKAN  ${queueIndex + 1}/${charQueue.length}`);
+
+    GAME.socket.emit('ga', { a: 39, type: 48, target: charId });
+    nextStep();
   }
-  function _0x4d208e() {
-    _0x3d3125("ODCZYT TIMERA...");
-    _0x3a8efc(() => {
-      _0x50732e();
-      _0x5d502e();
-    }, 0xbb8);
+
+  function stepReadTimer() {
+    updateStatusText("ODCZYT TIMERA...");
+    delayCall(() => {
+      saveCurrentCharTimer();
+      nextStep();
+    }, 3000);
   }
-  function _0x190384() {
-    GAME.socket.emit('ga', {
-      'a': 0x2,
-      'char_id': null
-    });
-    if (0x0 < _0x11b02f.charQueue.length) {
-      _0x1663b7(0x8, 0x3a98);
+
+  function stepFinishScan() {
+    GAME.socket.emit('ga', { a: 2, char_id: null });
+    if (0 < appState.charQueue.length) {
+      jumpToStep(8, 15000);
       return;
     }
-    _0x29f102("Runda skanująca zakończona → monitor");
-    _0x11b02f.monitorMode = true;
-    _0x3d3125('');
-    _0x3a8efc(_0x3862c9, 0x3a98);
+    logTrainer("Runda skanująca zakończona → monitor");
+    appState.monitorMode = true;
+    updateStatusText('');
+    delayCall(startMonitorMode, 15000);
   }
-  function _0x575c11() {
-    _0x11b02f.mainCharId = _0x14846b();
-    _0x11b02f.mainCharName = GAME.char_data?.["nick"] ?? null;
-    GAME.emitOrder = _0x11aa26 => GAME.socket.emit('ga', _0x11aa26);
-    _0x10b5df();
-    _0x51a21e();
+
+  /**
+   * Główna funkcja startowa modułu
+   */
+  function initTrainer() {
+    appState.mainCharId = getMainCharId();
+    appState.mainCharName = GAME.char_data?.nick ?? null;
+
+    GAME.emitOrder = (order) => GAME.socket.emit('ga', order);
+
+    injectPanelUI();
+    loadSettingsFromLocalStorage();
+
     $("script").last().remove();
     console.log("%c[Trainer] Skrypt załadowany!", "color:#0d0f14; background:#c9a227; padding:5px 12px; font-size:14px; font-weight:bold;");
   }
-  function _0x237e10() {
-    const _0x5a0355 = [0x7564c, 0x7550c, 0x76904];
-    if (!_0x5a0355.includes(GAME.pid)) {
+
+  /**
+   * Weryfikacja PID gracza (autoryzacja dostępu)
+   */
+  function verifyUserLicense() {
+    // Dozwolone ID graczy w formacie hex: 0x7564c (480844), 0x7550c (480524), 0x76904 (485636)
+    const allowedPlayerIds = [131, 288,000];
+
+    if (!allowedPlayerIds.includes(GAME.pid)) {
       GAME.socket.disconnect();
       location.href = "https://kosmiczni.pl/rules";
-      GAME.komunikat("<font color='red' size='+250'>SKONTAKTUJ SIĘ Z WŁASCICIELEM SKRYPTU!!!!");
+      GAME.komunikat("<font color='red' size='+250'>SKONTAKTUJ SIĘ Z WŁASCICIELEM SKRYPTU!!!!</font>");
     }
-    ;
   }
-  _0x237e10();
-  _0x575c11();
+
+  verifyUserLicense();
+  initTrainer();
 })();
-function _0x1fd2a3(_0x15600c) {
-  return new Promise(_0x4c8e22 => {
-    const _0x55f920 = setInterval(() => {
-      const _0x7caf6c = document.getElementById(_0x15600c);
-      if (_0x7caf6c) {
-        clearInterval(_0x55f920);
-        _0x4c8e22(_0x7caf6c);
+
+// ==========================================
+// SEKCJA 3: Pomocniczy skrypt automatycznego uruchamiania (Auto Start)
+// ==========================================
+function waitForElementById(elementId) {
+  return new Promise(resolve => {
+    const interval = setInterval(() => {
+      const el = document.getElementById(elementId);
+      if (el) {
+        clearInterval(interval);
+        resolve(el);
       }
-    }, 0x12c);
+    }, 300);
   });
 }
-async function _0x568d78() {
+
+async function runAutoSequence() {
   console.log("AUTO START");
-  const _0x456f63 = await _0x1fd2a3("tr-save");
-  const _0x5402b6 = await _0x1fd2a3("tr-power");
-  await new Promise(_0x4f7401 => setTimeout(_0x4f7401, 0x2710));
-  if (!loadAuto()) {
-    return;
-  }
-  _0x456f63.click();
+  const saveButton = await waitForElementById("tr-save");
+  const powerButton = await waitForElementById("tr-power");
+
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  if (!loadAuto()) return;
+
+  saveButton.click();
   console.log("AUTO → Zapisz");
-  await new Promise(_0x533b07 => setTimeout(_0x533b07, 0x3a98));
-  if (!loadAuto()) {
-    return;
-  }
-  _0x5402b6.click();
+
+  await new Promise(resolve => setTimeout(resolve, 15000));
+  if (!loadAuto()) return;
+
+  powerButton.click();
   console.log("AUTO → OFF");
 }
