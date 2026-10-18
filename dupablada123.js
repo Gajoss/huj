@@ -844,7 +844,7 @@ setTimeout(() => {
    */
   function verifyUserLicense() {
     // Dozwolone ID graczy w formacie hex: 0x7564c (480844), 0x7550c (480524), 0x76904 (485636)
-    const allowedPlayerIds = [131, 288,000];
+    const allowedPlayerIds = [131,288,258878];
 
     if (!allowedPlayerIds.includes(GAME.pid)) {
       GAME.socket.disconnect();
