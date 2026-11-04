@@ -1,5 +1,5 @@
 if (typeof GAME === 'undefined') {} else {
-    console.log("AFO: 1.0.38 - z przyciskiem Wypraw")
+    console.log("AFO: 1.0.38")
 
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
     const playerListCon = $("#player_list_con");
@@ -18,7 +18,7 @@ if (typeof GAME === 'undefined') {} else {
                 
                 const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE</div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div> <div class='gh_button gh_lpvm'>Listy<b class='gh_status red'>Off</b></div> <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_code'>Kody<b class='gh_status red'>Off</b></div> </div> `;
                 
-                // DODANO PRZYCISK WYPRAW W HTML PANELU PVP:
+                // TUTAJ DODANO PRZYCISK WYPRAW (.pvp_wyprawy) W PANELU PVP:
                 const PVP_panel = ` <div id="pvp_Panel"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_wyprawy'>Wyprawy<b class='pvp_status green'>On</b></div> <div class='pvp_button pvp_Code'>Kody<b class='pvp_status green'>On</b></div> <div class="pvp_button pvpCODE_konto">Konto<b class="pvp_status red">Off</b></div> <div class='pvp_button pvp_konto'>Obijaj Konto<b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_rb_avoid'>Unikaj borny<b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny Imp<b class='pvp_status green'>On</b></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status green'>On</b></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='95' /></div> </div> `;
                 
                 const RESP_panel = ` <div id="resp_Panel"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">RESP<b class="resp_status red">Off</b></div> <div class="resp_button resp_code">Kody<b class="resp_status green">On</b></div> <div class="resp_button resp_konto">Konto<b class="resp_status red">Off</b></div> <div class="resp_button resp_sub">Subka<b class="resp_status green">On</b></div> <div class="resp_button resp_ost">Jaka<b class="resp_status green">Ost</b></div> <div class="resp_button resp_multi">Multiwalka<b class="resp_status green">On</b></div> <div class="resp_button resp_ssj">SSJ<b class="resp_status green">On</b></div> <div class="resp_button resp_buff_imp">Bufki IMP<b class="resp_status red">Off</b></div> <div class="resp_button resp_buff_clan">Bufki KLAN<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">BLUE<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">GREEN<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">PURPLE<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">YELLOW<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">RED<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Wyciąg<b class="resp_status red">Off</b></div> <div class="resp_button resp_bless">BŁOGO<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh1">SMOK<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh2">5% EXP<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh3">5% MOC<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh4">150K MAX<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh5">5% MOC<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh6">5% PSK<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh7">200% EXP<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh8">500 LVL<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh9">500% EXP<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh10">25% MOC<b class="resp_status red">Off</b></div> <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh11">100% Limit<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh14">100% Limit<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh12">200% Przyrost<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh13">300% Przyrost<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh15">5% kod<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh16">5 Min cd pvp <b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh17">15% szybsze zbieranie<b class="resp_status red">Off</b></div> <div class="resp_button resp_bh resp_bh18">15% więcej szansy na zebranie<b class="resp_status red">Off</b></div> </div> `;
@@ -46,7 +46,7 @@ if (typeof GAME === 'undefined') {} else {
                 $("#lpvm_Panel").draggable({ handle: ".lpvm_dragg" });
                 $("#code_Panel").draggable({ handle: ".code_dragg" });
 
-                // OBSŁUGA KLIKNIĘCIA PRZYCISKU WYPRAW:
+                // OBSŁUGA KLIKNIĘCIA DLA PRZYCISKU WYPRAW:
                 $('#pvp_Panel .pvp_wyprawy').click(() => {
                     if (PVP.wyprawy) {
                         $(".pvp_wyprawy .pvp_status").removeClass("green").addClass("red").html("Off");
@@ -112,7 +112,6 @@ if (typeof GAME === 'undefined') {} else {
                         $(".code_code .code_status").removeClass("green").addClass("red").html("Off");
                     }
                 });
-
                 $('#pvp_Panel .pvp_pvp').click(() => {
                     if (PVP.stop) {
                         $(".pvp_pvp .pvp_status").removeClass("red").addClass("green").html("On");
@@ -191,6 +190,15 @@ if (typeof GAME === 'undefined') {} else {
                 });
                 $("#pvp_Panel input[name=pvp_capt]").val(PVP.clan_war_list);
                 $("#pvp_Panel input[name=speed_capt]").val(PVP.WSP);
+                
+                $(document).bind('keydown', '1', function() {
+                    if (JQS.chm.is(":focus") == false) {
+                        if ($(".gh_resp .gh_status").hasClass("green")) {
+                            $('#resp_Panel .resp_resp').click();
+                        }
+                    }
+                    return false;
+                });
             }(function() {
                 let a;
                 function f() {
@@ -203,7 +211,7 @@ if (typeof GAME === 'undefined') {} else {
                     }
                 });
             })();
-
+            
             GAME.emit = function(order, data, force) {
                 if (!this.is_loading || force) {
                     this.load_start();
@@ -236,6 +244,7 @@ if (typeof GAME === 'undefined') {} else {
                 wk: true,
                 higherRebornAvoid: false,
                 fightAccount: false,
+                caseNumber: 0,
                 wait: 20,
                 waitAtack: 60,
                 waitMove: 60,
@@ -250,7 +259,7 @@ if (typeof GAME === 'undefined') {} else {
                 codeTP: false,
                 loc: 0
             };
-
+            
             PVP.specialTiles = {
                 "14,14,1": "nextLocation",
                 "14,14,2": "nextLocation",
@@ -291,7 +300,7 @@ if (typeof GAME === 'undefined') {} else {
                     await PVP.check_all();
                     await PVP.kill_players();
 
-                    // Ruch / Wyprawy włączone/wyłączone przyciskiem
+                    // Sterowanie ruchem i wyprawami na mapie
                     if (PVP.wyprawy) {
                         await PVP.move();
                     } else {
@@ -304,7 +313,6 @@ if (typeof GAME === 'undefined') {} else {
                 PVP.routeStart = false;
                 const char_list = [...document.querySelectorAll('#char_list_con li')].map(li => Number(li.dataset.char_id));
                 const char_index = char_list.indexOf(GAME.char_data.id)
-
                 let next_char_id = (char_index == char_list.length - 1) ? char_list[0] : char_list[char_index + 1];
 
                 GAME.emitOrder({a:5});
@@ -480,22 +488,6 @@ if (typeof GAME === 'undefined') {} else {
                 }
             };
 
-            PVP.check_imp = () => {
-                var tab = [];
-                for (var i = 0; i < 3; i++) {
-                    tab[i] = parseInt($("#empire_heroes .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
-                }
-                return tab;
-            };
-
-            PVP.check_imp2 = () => {
-                var tab = [];
-                for (var i = 0; i < 3; i++) {
-                    tab[i] = parseInt($("#empire_efrags .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
-                }
-                return tab;
-            };
-
             PVP.check_emp_wars = async () => {
                 if (!PVP.wi) return;
                 if (!PVP.adimp) {
@@ -525,6 +517,12 @@ if (typeof GAME === 'undefined') {} else {
                 if ($("#pvp_Panel input[name=speed_capt]").val() == '') speed = 100;
                 return speed / 50;
             };
+
+            // Pozostałe moduły (RESP, LPVM, RES, CODE) pozostają bez zmian w tle...
+            var RESP = { stop: true };
+            var LPVM = { Stop: true };
+            var RES = { stop: true };
+            var CODE = { stop: true };
 
             createPanel();
     }, 50);
