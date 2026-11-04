@@ -1,7 +1,5 @@
 var checked = false;
 var latency = -1;
-const gitUrl = 'https://raw.githubusercontent.com/Gajoss/huj/'
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 if (typeof GAME === 'undefined') { } else {
     let Pog = setInterval(() => {
@@ -21,6 +19,16 @@ if (typeof GAME === 'undefined') { } else {
                 if (eval(match[1])['io']) {GAME.socket = eval(match[1]); return;}
             }
         });
+
+	window.a24value = null;
+	Array.from(document.getElementsByTagName('script')).forEach(script => {
+    	    const scriptContent = script.innerHTML;
+    	    const regex = /a:\s*'([a-zA-Z0-9]+)'/g;
+    	    let match;
+    	    while ((match = regex.exec(scriptContent)) !== null) {
+                window.a24value = match[1];
+    	    }
+	});
 
         class kwsv3 {
             constructor(charactersManager) {
@@ -49,7 +57,7 @@ if (typeof GAME === 'undefined') { } else {
                 this.addToCSS(`.kom {background: url(/gfx/layout/tloPilot.png); background-size: cover; border-image: url(/gfx/layout/mapborder.png) 7 8 7 7 fill; border-style: solid; border-width: 7px 8px 7px 7px; box-shadow: none;}.kom .close_kom b {background: url(/gfx/layout/tloPilot.png);}.exchange_win {overflow-y: auto;overflow-x: hidden;padding-right: 10px;box-sizing: border-box;}.exchange_win::-webkit-scrollbar {width: 13px;}.exchange_win::-webkit-scrollbar-track {background: #f0f0f0;border-radius: 10px;}.exchange_win::-webkit-scrollbar-thumb {background: #c0c0c0;border-radius: 10px;border: 2px solid transparent;background-clip: content-box;}.exchange_win {scrollbar-width: thin;scrollbar-color: #c0c0c0 #f0f0f0;}`);
                 this.addToCSS(`#emp_list .petopt_btns .newBtn{margin:0px 3px 3px 0px;} .newBtn.do_all_instances{color:#e5d029;}`);
                 this.addToCSS(`#quick_bar{z-index:4;} .qlink.kws_active_icon{animation-name:kws_active_icon;animation-duration:1s;animation-iteration-count:infinite;}@keyframes kws_active_icon { 0% { filter: hue-rotate(168deg); } 50% { filter:hue-rotate(40deg); } 100% { filter: hue-rotate(168deg); } } .sideIcons{ width:29px; height:29px; left:-37px; background-size:contain; } .autoExpeCodes{background:#12121294; border:1px solid rgb(87, 87, 114); border-radius:5px 0px 0px 5px; position:absolute; top:-100px; left:-97px; padding:5px; display:none; color:#ffe500c7; user-select:none;} .manage_autoExpeditions:hover + .autoExpeCodes, .autoExpeCodes:hover{ display:flex; } .autoExpeCodes .newCheckbox{margin: 0 auto; display: block;} `);
-                this.addToCSS(`#secondary_char_stats .instance{margin-top:10px; cursor:pointer; width:100px;} #secondary_char_stats .activities{margin-top:-5px; cursor:pointer; width:100px;} #secondary_char_stats ul {margin-top:-18px; margin-left:-18px;} .ico.a11{background:url(${gitUrl}/main/instances.png); background-repeat: no-repeat; background-size: inherit; background-position: center;} .ico.a12{background-image: url(${gitUrl}/main/activity.png); background-repeat: no-repeat; background-size: inherit; background-position: center;}`); 
+                this.addToCSS(`#secondary_char_stats .instance{margin-top:10px; cursor:pointer; width:100px;} #secondary_char_stats .activities{margin-top:-5px; cursor:pointer; width:100px;} #secondary_char_stats ul {margin-top:-18px; margin-left:-18px;} .ico.a11{background:url("https://raw.githubusercontent.com/KWSforAll/KWSforAll/main/instances.png"); background-repeat: no-repeat; background-size: inherit; background-position: center;} .ico.a12{background-image: url(https://raw.githubusercontent.com/KWSforAll/KWSforAll/main/activity.png); background-repeat: no-repeat; background-size: inherit; background-position: center;}`); 
                 this.addToCSS(`.ssj_uio{background:url("https://i.imgur.com/EcfEUcG.png");}`);
                 this.addToCSS(`#quick_allTransformations { position:absolute; top:33px; z-index:1; background:rgb(0 0 0 / 59%); display:none; flex-direction: column-reverse; padding:5px 5px 0px 5px; border-radius:5px; box-shadow:0px 0px 5px 0px rgb(32 96 185);} .show_qat:hover + #quick_allTransformations, #quick_allTransformations:hover { display:flex; } #quick_allTransformations .option { display:block; margin:0px 0px 5px 0px; }`);
                 this.addToCSS(`#player_list_con .glory_rank.war{animation:none !important;background-color:rgb(22 83 106);box-shadow:0px 0px 7px 0px rgb(0 253 255);} .player_clan.enemy img{animation:none !important;box-shadow:0px 0px 10px 1px rgb(0 253 255);}`);
@@ -59,44 +67,13 @@ if (typeof GAME === 'undefined') { } else {
                 this.addToCSS(`.option.ls.spawner{ position:absolute; top:60px; right:40px; background-size: 100% 100%; border: solid #6f6f6f 1px; }`);
                 this.addToCSS(`#kws_minimap_settings{ margin:10px 0px 0px 0px; border-top:solid white 1px; padding-top:10px; } #field_sett #field_options{ height:407px; } #minimap_con{ ${this.minimap.side == 1 ? `left: -4px; right: unset;` : this.minimap.side == 2 ? `left: -210px; right: unset;` : ""} opacity: ${this.minimap.opacity / 100} } #minimap_range{ width:150px; display:inline-block; vertical-align:middle;} .smin_butt{background: #31313a69 !important; border: solid #ffffff4d 1px !important; width:auto !important; height:32px !important; line-height: 30px; display: inline-block; text-align: center; font-family: 'Play', sans-serif; font-size: 13px; font-weight: Bold; color: #fff; text-decoration: none; text-transform: uppercase; border: none; padding: 0 10px; border-radius: 5px; cursor: pointer; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; margin-top:2px; float:none !important;} .smin_input{background: #040e13; height: 31px; border: solid #ffffff4d 1px !important; display: inline-block; text-align:center; font-size: 13px; color: #305779; font-family: 'Play', sans-serif; vertical-align: middle;border-radius: 5px;}`);
                 this.addToCSS(`#kws_locInfo{background:url("/gfx/layout/tloPilot.png");position: absolute;top: 220px;z-index: 2;width: 204px;padding: 5px;border-radius: 5px;border-image: url(/gfx/layout/mapborder.png) 7 8 7 7 fill;border-style: solid;border-width: 7px 8px 7px 7px; display:${this.minimap.loc_info == 0 ? `none` : `block`}} #kws_locInfo .sekcja{position:absolute;top:-20px;left:0px;background:url("https://i.imgur.com/Mi3kUpg.png");background-size:100% 100%;width:190px;}`);
+                this.addToCSS(`.kws_top_bar{float:left !important; position: absolute; z-index: -1;} .kws_top_bar_section{color:white;padding:3px 5px 3px 5px;border-radius:5px;margin-right:8px;user-select:none;}`);
                 this.addToCSS(`.go_to_emp_con{ position:absolute; top:33px; z-index:1; background:rgb(0 0 0 / 59%); display:none; flex-direction: column-reverse; padding:5px 5px 0px 5px; border-radius:5px; box-shadow:0px 0px 5px 0px rgb(32 96 185);} .empPos:hover + .go_to_emp_con, .go_to_emp_con:hover { display:flex; } .go_to_emp_con .qlink { display:block; margin:0px 0px 5px 0px; }`);
                 this.addToCSS(`#ekw_sets_buy button, div[data-option="change_ekw_set"]{height:20px !important; line-height:19px !important; margin-top:9px !important;}`);
                 this.addToCSS(`#page_game_camp .ekw_slot.smaller img{ width: 64px; } #page_game_camp div[data-item_id="1923"].smaller img { width: 32px; position: absolute; margin-top: -64px; margin-left: 34px; }`);
-                //spawner config
-                this.addToCSS(`
-                #kws_spawn {
-                    display: none;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    background: rgba(0,0,0,0.9);
-                    z-index: 9999;
-                    width: 200px;
-                    padding: 6px;
-                    border-radius: 6px;
-                    border: 2px solid #000;
-                    color: white;
-                    pointer-events: auto;
-                }
-                
-                #kws_spawn .spawn_header {
-                    font-weight: bold;
-                    text-align: center;
-                    margin-bottom: 5px;
-                    border-bottom: 1px solid gray;
-                    padding-bottom: 3px;
-                }
-                
-                #kws_spawn .spawn_row {
-                    border-bottom: solid gray 1px;
-                    font-size: 13px;
-                    display: flex;
-                    padding: 4px;
-                }
-                `);
-                const savedSpawner = localStorage.getItem('kws_spawner');
-                if (savedSpawner) GAME.spawner = JSON.parse(savedSpawner);
-                $("body").append(`<div id="kws_spawn"> <div class="spawn_header">USTAWIENIA SPAWNU</div> <div id="kws_spawn2">${this.spawnList()}</div> </div>`);
+                this.addToCSS(`#kws_spawn{ background: rgba(0,0,0,0.9); position: fixed; top: 120px;left: 5px; z-index: 9999; width: 200px; padding: 1px; border-radius: 5px; border-style: solid; border-width: 7px 8px 7px 7px; display:block; user-select: none; color: #333333; } #kws_spawn .sekcja { position: absolute; top: -27px; left: -7px; background: rgba(0,0,0,0.9); filter: hue-rotate(150deg); background-size: 100% 100%; width: 200px; cursor: all-scroll; } #kws_spawn .spawn_row{border-bottom:solid gray 1px; color: white; font-size: 13px; display: flex; padding:4px;}`);
+                $("#map_canvas_container").append(`<div id="kws_spawn"> <div class="sekcja"><img src="/gfx/layout/war.png" class="spawn_switch">USTAWIENIA SPAWNU</div><div id="kws_spawn2" style="">${this.spawnList()}</div>`);
+                this.addToCSS(`.spawn_switch{cursor:pointer;}`);
                 this.addToCSS(`.quest_roll1{position:absolute; width:50px; height:50px; background:url('/gfx/layout/dice.png') 0 0; top:-25px; left:25px; cursor:pointer; filter:drop-shadow(0px 0px 10px lime)} .quest_roll2{position:absolute; width:50px; height:50px; background:url('/gfx/layout/dice.png') 0 0; top:-25px; left:75px; cursor:pointer; filter:drop-shadow(0px 0px 10px #00fdff)} .quest_roll3{position:absolute; width:50px; height:50px; background:url('/gfx/layout/dice.png') 0 0; top:-25px; left:125px; cursor:pointer; filter:drop-shadow(0px 0px 10px #ff0000)} .quest_roll:hover{background:url('/gfx/layout/dice.png') 0 -45px;} .quest_roll1:hover{background:url('/gfx/layout/dice.png') 0 -45px;} .quest_roll2:hover{background:url('/gfx/layout/dice.png') 0 -45px;} .quest_roll3:hover{background:url('/gfx/layout/dice.png') 0 -45px;}`);
                 this.addToCSS(`#lastmap_bar { top: 115px !important; }`);
                 this.addToCSS(`button#changeProfileNext { position: absolute; top: 85px; right: 16px; background: linear-gradient(0deg, rgba(252,238,54,1) 0%, rgba(247,121,12,1) 100%); border: 2px solid #973804; border-radius: 5px; width: 52px; }`);
@@ -109,64 +86,7 @@ if (typeof GAME === 'undefined') { } else {
                     background: linear-gradient(0deg, rgba(247,121,12,1) 0%, rgba(252,238,54,1) 100%);
                     border: 0px solid #973804;
                 }`);
-                this.addToCSS(`
-                    .kws_top_bar, .kws_additional_top_bar{
-                        float:left !important;
-                        position: absolute;
-                        z-index: -1
-                    }
-                    .kws_additional_top_bar{
-                        display: none
-                    }
-                    .kws_top_bar_section, .kws_additional_top_bar_section {
-                        color: white;
-                        padding: 3px 3px;
-                        margin-right: 5px;
-                        user-select: none;
-                        display: inline-block;
-                        vertical-align: middle;
-                    }
-                    .latencyElement {
-                        width: 32px !important;
-                        min-width: 32px !important;
-                        max-width: 32px !important;
-                        padding: 3px 0px !important;
-                        text-align: center;
-                        white-space: nowrap;
-                        overflow: visible;
-                    }
-                    .sc_active { color: red !important; font-weight: bold; }
-                    .status_active { color: lime !important; }
-                `);
-                this.addToCSS(`
-                    .soul_card_container {
-                        display: inline-block;
-                        vertical-align: middle;
-                        margin-left: 5px;
-                    }
-                    
-                    .sc_btn {
-                        display: inline-block;
-                        width: 32px;
-                        text-align: center;
-                        cursor: pointer;
-                        color: #ccc;
-                        margin: 0 2px;
-                        border-radius: 5px;
-                        font-family: monospace;
-                        font-weight: bold;
-                        transition: background 0.2s, color 0.2s;
-                    }
-                    
-                    .sc_btn:hover {
-                        background: rgba(255, 255, 255, 0.2);
-                        color: white;
-                    }
-                    
-                    .sc_btn.active {
-                        color: red;
-                    }
-                `);
+                this.addToCSS(`.kws_additional_top_bar{float:left !important; position: absolute; z-index: -1; display: none} .kws_additional_top_bar_section{color:white;padding:3px 5px 3px 5px;border-radius:5px;margin-right:8px;user-select:none;}`);
                 $("#top_bar").append(`<div class="kws_top_bar"></div>`);
                 $("#top_bar").append(`<div class="kws_additional_top_bar"></div>`);
                 $("#bless_type_2").click();
@@ -208,187 +128,20 @@ if (typeof GAME === 'undefined') { } else {
                     }
                 }, 200);
             }
-loadRiddles(cb) {
-    cb([
-        {"id":222,"answer":"samolotem"},
-        {"id":223,"answer":"w sali treningowej"},
-        {"id":224,"answer":"Igsil"},
-        {"id":225,"answer":"fuzję"},
-        {"id":226,"answer":"steki"},
-        {"id":227,"answer":"Na festiwal"},
-        {"id":228,"answer":"Mergic"},
-        {"id":229,"answer":"W nawiedzonym domu"},
-        {"id":230,"answer":"Duchy"},
-        {"id":231,"answer":"Kamehameha"},
-        {"id":232,"answer":"do miasta"},
-        {"id":233,"answer":"Grimbel"},
-        {"id":234,"answer":"do centrum"},
-        {"id":235,"answer":"3"},
-        {"id":236,"answer":"12"},
-        {"id":237,"answer":"Sushi"},
-        {"id":238,"answer":"Cars"},
-        {"id":239,"answer":"Libel"},
-        {"id":240,"answer":"Dotknięciem"},
-        {"id":241,"answer":"W domu"},
-        {"id":242,"answer":"vegete"},
-        {"id":243,"answer":"fasolkę senzu"},
-        {"id":244,"answer":"teleportacją"},
-        {"id":245,"answer":"rękę"},
-        {"id":246,"answer":"10"},
-        {"id":247,"answer":"pszenicę"},
-        {"id":248,"answer":"Wandale"},
-        {"id":249,"answer":"Na planetę Beerusa"},
-        {"id":250,"answer":"200"},
-        {"id":251,"answer":"Energią Zniszczenia"},
-        {"id":255,"answer":"Gohan"},
-        {"id":256,"answer":"Szopa"},
-        {"id":257,"answer":"Gord"},
-        {"id":258,"answer":"Górscy bandyci"},
-        {"id":259,"answer":"Kamehameha"},
-        {"id":260,"answer":"Noc strachów"},
-        {"id":261,"answer":"Trzy"},
-        {"id":262,"answer":"Gil"},
-        {"id":263,"answer":"Cienisty czarnoksiężnik"},
-        {"id":264,"answer":"Drewniany strażnik"},
-        {"id":265,"answer":"Miotłą"},
-        {"id":266,"answer":"IP44"},
-        {"id":267,"answer":"Śnieżki"},
-        {"id":268,"answer":"Śnieżny Król"},
-        {"id":269,"answer":"kronoS"},
-        {"id":270,"answer":"FrostramentiumGlaciator"},
-        {"id":271,"answer":"Dziura"},
-        {"id":272,"answer":"Chmura"},
-        {"id":273,"answer":"Drewno"},
-        {"id":274,"answer":"bohaterem"},
-        {"id":275,"answer":"Złotą rybkę"},
-        {"id":276,"answer":"bursztyny"},
-        {"id":277,"answer":"3"},
-        {"id":278,"answer":"12000"},
-        {"id":280,"answer":"Wielkanocy"},
-        {"id":281,"answer":"Lawejto"},
-        {"id":282,"answer":"4"},
-        {"id":283,"answer":"Wielki Hopcio"},
-        {"id":284,"answer":"Mocnausz"},
-        {"id":290,"answer":"Planeta Festiva"},
-        {"id":291,"answer":"Dekoracje Festiwalowe"},
-        {"id":292,"answer":"2"},
-        {"id":293,"answer":"Majtek"},
-        {"id":294,"answer":"Komandor Aria"},
-        {"id":295,"answer":"Marco"},
-        {"id":296,"answer":"Świnie"},
-        {"id":297,"answer":"Nowicjusz Tom"},
-        {"id":298,"answer":"Sasza"},
-        {"id":299,"answer":"cystersi"},
-        {"id":300,"answer":"iseyin"},
-        {"id":301,"answer":"monachium"},
-        {"id":302,"answer":"brazylia"},
-        {"id":303,"answer":"james rodriguez"},
-        {"id":304,"answer":"chile"},
-        {"id":305,"answer":"stambuł"},
-        {"id":306,"answer":"urugwaj"},
-        {"id":307,"answer":"jestem bogiem"},
-        {"id":308,"answer":"imago"},
-        {"id":309,"answer":"eudajmonizm"},
-        {"id":310,"answer":"przyszłość"},
-        {"id":311,"answer":"czas"},
-        {"id":312,"answer":"cień"},
-        {"id":313,"answer":"orzechy"},
-        {"id":314,"answer":"deszcz"},
-        {"id":315,"answer":"kaimetsu"},
-        {"id":322,"answer":"bałwan"},
-        {"id":323,"answer":"tydzień"},
-        {"id":324,"answer":"zegar"},
-        {"id":325,"answer":"nożyczki"},
-        {"id":326,"answer":"56"},
-        {"id":330,"answer":"kala"},
-        {"id":331,"answer":"velk"},
-        {"id":332,"answer":"3"},
-        {"id":333,"answer":"koszmar"},
-        {"id":334,"answer":"tiko"},
-        {"id":335,"answer":"3"},
-        {"id":336,"answer":"squely"},
-        {"id":337,"answer":"nie"},
-        {"id":338,"answer":"z duchów"},
-        {"id":339,"answer":"maski"},
-        {"id":340,"answer":"Pan Marionetek"},
-        {"id":341,"answer":"Chochlik"},
-        {"id":342,"answer":"6 grudnia"},
-        {"id":343,"answer":"25 grudnia"},
-        {"id":344,"answer":"roboty"},
-        {"id":345,"answer":"dane"},
-        {"id":346,"answer":"Promień Śmiechu"},
-        {"id":347,"answer":"fala"},
-        {"id":348,"answer":"Kryształy Wspomnień"},
-        {"id":349,"answer":"Echo Tańca"},
-        {"id":350,"answer":"Kapsuła Czasu"},
-        {"id":101,"answer":"778"},
-        {"id":29,"answer":"N"},
-        {"id":30,"answer":"36"},
-        {"id":31,"answer":"24"},
-        {"id":27,"answer":"6"},
-        {"id":75,"answer":"10"},
-        {"id":86,"answer":"1"},
-        {"id":121,"answer":"GŁOS"},
-        {"id":122,"answer":"11 13 17"},
-        {"id":110,"answer":"O"},
-        {"id":114,"answer":"Słońce"},
-        {"id":116,"answer":"Grawitacja"},
-        {"id":97,"answer":"TAJEMNICA"},
-        {"id":92,"answer":"M72ELI"},
-        {"id":99,"answer":"DZIEN I NOC"},
-        {"id":36,"answer":"1603"},
-        {"id":40,"answer":"obol"},
-        {"id":286,"answer":"Cerealian"},
-        {"id":42,"answer":"death"},
-        {"id":253,"answer":"280"},
-        {"id":254,"answer":"50"},
-        {"id":28,"answer":"12"},
-        {"id":78,"answer":"15"},
-        {"id":85,"answer":"3"},
-        {"id":77,"answer":"17"},
-        {"id":74,"answer":"13"},
-        {"id":204,"answer":"4"},
-        {"id":79,"answer":"146"},
-        {"id":89,"answer":"2"},
-        {"id":149,"answer":"imie"},
-        {"id":150,"answer":"lewa reka"},
-        {"id":46,"answer":"stara wiedzma"},
-        {"id":87,"answer":"4"},
-        {"id":11,"answer":"NAMEK"},
-        {"id":12,"answer":"WALKA"},
-        {"id":9,"answer":"Mrok"},
-        {"id":22,"answer":"Tatami"},
-        {"id":73,"answer":"5"},
-        {"id":44,"answer":"KI"},
-        {"id":351,"answer":"liwia"},
-        {"id":352,"answer":"muszle"},
-        {"id":353,"answer":"2"},
-        {"id":354,"answer":"Bogdan"},
-        {"id":355,"answer":"3"},
-        {"id":90,"answer":"3521"},
-        {"id":91,"answer":"Arion"},
-        {"id":94,"answer":"nuvys"},
-        {"id":96,"answer":"H93MD"},
-        {"id":98,"answer":"Rex"},
-        {"id":102,"answer":"serafin"},
-        {"id":356,"answer":"kokos"},
-        {"id":357,"answer":"babidiego"},
-        {"id":358,"answer":"3"},
-        {"id":359,"answer":"enma"},
-        {"id":365,"answer":"Matka zarazy"},
-		{"id":366,"answer":"3"},
-		{"id":367,"answer":"Trujące moczary wiedźm"},
-		{"id":368,"answer":"Dynie"}
-		
-    ]);
-}
+            loadRiddles(cb) {
+                fetch(`https://raw.githubusercontent.com/KWSforAll/KWSforAll/mains/riddles.json`).then(res => res.json()).then((out) => {
+                    cb(out)
+                }).catch(err => {
+                    throw err
+                });
+            }
             solveRiddle(r_id) {
                 let riddle = this.riddles.find((r) => r.id == r_id);
                 if (riddle) {
                     $("input[id=quest_riddle]").val(riddle.answer);
                 } else {
-                    console.log('riddle id: ', r_id)
-                }
+                    //console.log('riddle id: ', r_id)
+		}
             }
             getSettings() {
                 let settings = JSON.parse(localStorage.getItem("kws_settings"));
@@ -555,7 +308,7 @@ loadRiddles(cb) {
                                 a: 8,
                                 type: 3
                             });
-                        } else if (this.auto_arena && !isNaN(opponent)) { } else if (GAME.char_tables.timed_actions[0] == undefined || (! this.auto_arena && GAME.char_tables.timed_actions[1] == undefined && GAME.char_data.bonus16 > GAME.getTime())) {
+                        } else if (this.auto_arena && !isNaN(opponent)) { } else if (GAME.char_tables.timed_actions[0] == undefined || GAME.char_tables.timed_actions[1] == undefined && GAME.char_data.bonus16 > GAME.getTime()) {
                             GAME.socket.emit('ga', {
                                 a: 10,
                                 type: 2,
@@ -602,64 +355,57 @@ loadRiddles(cb) {
                     }, 2000);
                     setTimeout(() => {
                         if ((GAME.char_data.reborn == 4 || GAME.char_data.reborn == 5) && GAME.char_data.alt_transform_expiry < GAME.getTime()) {
-/*                       
-					   GAME.socket.emit('ga', {
+                            GAME.socket.emit('ga', {
                                 a: 18,
                                 type: 8,
                                 tech_id: 134
                             });
-							*/
                         }
                     }, 3000);
                 }
             }
-            async manageAutoArena() {
-                if (!this.auto_arena) {
-                    this.stopAutoArena();
-                    return;
-                }
-            
-                GAME.socket.emit('ga', {
-                    a: 46,
-                    type: 0
-                });
-            
-                await delay(1000);
-                this.attackAutoArena();
-            }
-            
-            async attackAutoArena() {
-                if (!this.auto_arena) {
-                    this.stopAutoArena();
-                    return;
-                }
-            
-                const $arenaCon = $("#arena_players");
-                const $opponents = $arenaCon.find('.player button[data-option="arena_attack"][data-quick="1"]:not(.initial_hide_forced)');
-            
-                if ($opponents.length > 0 && GAME.timed == 0) {
-                    const opponentIndex = parseInt($opponents.first().attr("data-index"));
-            
+            manageAutoArena() {
+                if (this.auto_arena) {
                     GAME.socket.emit('ga', {
                         a: 46,
-                        type: 1,
-                        index: opponentIndex,
-                        quick: 1
+                        type: 0
                     });
-            
-                    await delay(500);
-                    return this.attackAutoArena();
-                } 
-                
-                await delay(5000);
-                this.manageAutoArena();
+                    setTimeout(() => {
+                        this.attackAutoArena();
+                    }, 1000);
+                } else {
+                    this.stopAutoArena();
+                }
+            }
+            attackAutoArena() {
+                let opponents = $("#arena_players").find(`.player button[data-option="arena_attack"][data-quick="1"]:not(.initial_hide_forced)`);
+                let opponent = parseInt(opponents.attr("data-index"));
+                if (this.auto_arena) {
+                    if (opponents.length > 0 && GAME.timed == 0) {
+                        GAME.socket.emit('ga', {
+                            a: 46,
+                            type: 1,
+                            index: opponent,
+                            quick: 1
+                        });
+                        setTimeout(() => {
+                            this.attackAutoArena();
+                        }, 500);
+                    } else {
+                        setTimeout(() => {
+                            this.manageAutoArena();
+                        }, 5000);
+                    }
+                } else {
+                    this.stopAutoArena();
+                }
             }
             stopAutoArena() {
                 this.auto_arena = false;
                 $(".qlink.manage_auto_arena").removeClass("kws_active_icon");
             }
             freeAssist() {
-                let fafa_el = $(`button[data-option="clan_assist"]`);
+                let fafa_el = $(`button[data-option="clan_assist"]:visible`);
                 if (fafa_el.length > 0) {
                     let fafa_tid = parseInt(fafa_el.eq(0).attr("data-tid"));
                     let fafa_target = parseInt(fafa_el.eq(0).attr("data-target"));
@@ -669,16 +415,17 @@ loadRiddles(cb) {
                         tid: fafa_tid,
                         target: fafa_target
                     });
+                    fafa_el.eq(0).hide();
                     setTimeout(() => {
                         this.freeAssist();
                     }, 2100);
                 } else {
+                    GAME.socket.emit('ga', {
+                        a: 39,
+                        type: 54
+                    });
                     GAME.komunikat("Asystowano wszystkim!");
                 }
-                GAME.socket.emit('ga', {
-                    a: 39,
-                    type: 54
-                });
             }
             autobless() {
                 let arr = $.map($('.use_buff:checked'), function (e, i) { return +e.value; });
@@ -698,11 +445,11 @@ loadRiddles(cb) {
                 }, 1000);
             }
             activateAllClanBuffs() {
-                let wb_cheap = $("#clan_buffs")[0].children[17].classList.contains('activied')
+                let abut = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`);
                 let isDisabled = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`).parents("tr").hasClass("disabled");
                 let cpbt = $("#clan_planet_buffs").html();
                 let acpbut = $("#has_clan_planet").find(`button[data-option="activate_prp_buff"]`);
-                if (!isDisabled && !wb_cheap) {
+                if (abut.length && !isDisabled) {
                     GAME.socket.emit('ga', {
                         a: 39,
                         type: 26
@@ -958,79 +705,75 @@ loadRiddles(cb) {
                 }, 100);
             }
             updateTopBar() {
-                GAME.socket.io.engine.pingInterval = 1000;
-                const char = GAME.char_data;
-            
-                const currentTime = Date.now();
-                const levelsGained = char.level - (GAME.startLevel || char.level);
-                const hrs = (currentTime - (GAME.startTime || currentTime)) / 3600000;
-                const lvlh = hrs > 0 ? (levelsGained / hrs).toFixed(2) : "0.00";
-            
-                const sk_timer = $(`#mdbp_${char.reborn}`).find('.timer').text();
-                const sk_status = sk_timer.length > 0 ? sk_timer : "AKTYWNE";
-                
-                let train_upgr = $("#train_uptime").find('.timer').text();
-                if (!train_upgr || train_upgr === "00:00:00") train_upgr = "AKTYWNE";
-            
-
-                const soulCards_current = $(".sc_sets_all.current").html();
-                const romans = ["I", "II", "III", "IV", "V"];
-                const soulCardsHTML = romans.map((rom, i) => {
-                    const activeClass = (soulCards_current === rom) ? "active" : "";
-                    
-                    return "<span class='sc_btn soul_cards_" + (i + 1) + " " + activeClass + "'>" + rom + "</span>";
-                }).join('');
-            
-                const lColor = latency < 51 ? "lime" : latency < 100 ? "yellow" : latency < 140 ? "orange" : "red";
-            
-                const traderBtn = (new Date().getDay() === 6) ? "<span class='kws_top_bar_section trader_info' style='cursor:pointer;'>HANDLARZ</span>" : "";
-                
-                const bar1 = `
-                    <span class='kws_top_bar_section latencyElement' style='color:${lColor}'>⇅${latency}</span>
-                    <span class='kws_top_bar_section sk_info' style='cursor:pointer;'>SK: <span style="color:${sk_status === "AKTYWNE" ? "lime" : "white"}">${sk_status}</span></span>
-                    <span class='kws_top_bar_section train_upgr_info' style='cursor:pointer;'>KODY: <span style="color:${train_upgr === "AKTYWNE" ? "lime" : "white"}">${train_upgr}</span></span>
-                    
-                    <span class='kws_top_bar_section lvl' style='cursor:pointer;'>LVL: <span>${lvlh}/H</span></span>
-                    <span class='kws_top_bar_section pvp' style='cursor:pointer;'>PVP: <span>${pvp_count}</span></span>
-                    <span class='kws_top_bar_section arena' style='cursor:pointer;'>ARENA: <span>${arena_count}</span></span>
-                    ${traderBtn}
-                    <span class='kws_top_bar_section additional_stats' style='cursor:pointer; color:${this.additionalTopBarVisible ? "orange" : "white"}'>STATY</span>
-                    <span class='kws_top_bar_section version' style='cursor:pointer;'>v<span>${version}</span></span>
-                `;
-            
-                const bar2 = `
-                    <span class='kws_additional_top_bar_section pvm_power' style='cursor:pointer;'>ZDOBYTA MOC: <span style="color:lime;">${GAME.dots(char.moc - (this.baselinePower || char.moc))}</span></span>
-                    <span class='kws_additional_top_bar_section future_stats' style='cursor:pointer;'>${this.prepareFutureStatsData()}</span>
-                    <span class='kws_additional_top_bar_section lvlsGained' style='cursor:pointer;'>ZDOBYTE LVL: <span>${GAME.dots(char.level - (this.baselineLevel || char.level))}</span></span>
-                    <span class='kws_additional_top_bar_section psk' style='cursor:pointer;'>PSK: ${GAME.dots(char.minor_ball)}</span>
-                    <span class='kws_additional_top_bar_section additional_stats_reset' style='cursor:pointer;'>RESET</span>
-                `;
-            
-                $(".kws_top_bar").html(bar1);
-                $(".kws_additional_top_bar").html(bar2);
-
-                // instances count display
+		GAME.socket.io.engine.pingInterval = 1000;
+                let sk_status;
                 let instances = [];
-                if (GAME.char_data) {
-                    instances = [
-                        GAME.char_data.icd_1, 
-                        GAME.char_data.icd_2, 
-                        GAME.char_data.icd_3, 
-                        GAME.char_data.icd_4, 
-                        GAME.char_data.icd_5, 
-                        GAME.char_data.icd_6
-                    ];
+                let currentLevel = GAME.char_data.level;
+                let currentTime = Date.now();
+                let levelsGained = currentLevel - GAME.startLevel;
+                let levelsPerHour = levelsGained / ((currentTime - GAME.startTime) / 1000 / 60 / 60);
+                let lvlh = levelsPerHour.toFixed(2);
+                if ($(`#mdbp_${GAME.char_data.reborn}`).find('.timer').length) {
+                    sk_status = $(`#mdbp_${GAME.char_data.reborn}`).find('.timer').text();
+                } else {
+                    sk_status = "AKTYWNE";
                 }
-                let sum_instances = instances.reduce((a, b) => a + (b || 0), 0);
-                $("#secondary_char_stats .instance ul").html(`${sum_instances}/12`);
-
-                // activities count display
+                let train_upgr = $("#train_uptime").find('.timer').text();
+                if (train_upgr.length == 0 || train_upgr == "00:00:00") {
+                    train_upgr = "AKTYWNE";
+                }
+                if ('char_data' in GAME) {
+                    instances = [GAME.char_data.icd_1, GAME.char_data.icd_2, GAME.char_data.icd_3, GAME.char_data.icd_4, GAME.char_data.icd_5, GAME.char_data.icd_6];
+                }
+                let sum_instances = instances.reduce(function (a, b) {
+                    return a + b;
+                }, 0);
                 let activity = $('#char_activity').text();
                 let received = $("#act_prizes").find("div.act_prize.disabled").length;
+                let is_trader = new Date();
+                let trader = `<span class='kws_top_bar_section trader_info' style='cursor:pointer;'>HANDLARZ</span> `;
+                let soulCards_current = $(".sc_sets_all.current").html();
+                let soulCards_one = `<span class='kws_top_bar_section soul_cards_one' style='cursor:pointer;color:${soulCards_current == "I" ? "red" : "white"}'>KD1</span>`;
+                let soulCards_two = `<span class='kws_top_bar_section soul_cards_two' style='cursor:pointer;color:${soulCards_current == "II" ? "red" : "white"}'>KD2</span>`;
+                let soulCards_three = `<span class='kws_top_bar_section soul_cards_three' style='cursor:pointer;color:${soulCards_current == "III" ? "red" : "white"}'>KD3</span>`;
+                let soulCards_four = `<span class='kws_top_bar_section soul_cards_four' style='cursor:pointer;color:${soulCards_current == "IV" ? "red" : "white"}'>KD4</span>`;
+                let soulCards_five = `<span class='kws_top_bar_section soul_cards_five' style='cursor:pointer;color:${soulCards_current == "V" ? "red" : "white"}'>KD5</span>`;
+		var latencyColor;
+		switch(true) {
+		    case (latency < 51):
+			latencyColor = "lime"
+		        break;
+		    case (latency < 100):
+			latencyColor = "yellow"
+		        break;
+		    case (latency < 140):
+			latencyColor = "orange"
+		        break;
+		    default:
+			latencyColor = "red"
+			break;
+		}
+		let latencyElement = `<span class='kws_top_bar_section latencyElement' style='cursor:pointer;color:${latencyColor}'>⇅${latency}</span>`;
+                let additionalStats = `<span class='kws_top_bar_section additional_stats' style='cursor:pointer;color:${this.additionalTopBarVisible ? "orange" : "white"}'>STATY</span>`;
+                let instance = `${sum_instances}/12`;
+                $("#secondary_char_stats .instance ul").html(instance);
                 let activities = `${activity}/185 (${received}/5)`;
                 $("#secondary_char_stats .activities ul").html(activities);
-
+                let innerHTML = ` <span class='kws_top_bar_section sk_info' style='cursor:pointer;'>SK: <span style="color:${sk_status == "AKTYWNE" ? "lime" : "white"};">${sk_status}</span></span> <span class='kws_top_bar_section train_upgr_info' style='cursor:pointer;'>KODY: <span style="color:${train_upgr == "AKTYWNE" ? "lime" : "white"};">${train_upgr}</span></span><span class='kws_top_bar_section lvl' style='cursor:pointer;'>LVL: <span>${lvlh}/H</span></span><span class='kws_top_bar_section pvp' style='cursor:pointer;'>PVP: <span>${pvp_count}</span></span><span class='kws_top_bar_section arena' style='cursor:pointer;'>ARENA: <span>${arena_count}</span></span> ${is_trader.getDay() == 6 ? trader : ''} [${soulCards_one}| ${soulCards_two}| ${soulCards_three}| ${soulCards_four}| ${soulCards_five}]  ${additionalStats} <span class='kws_top_bar_section version' style='cursor:pointer;'>v<span>${version}</span></span> ${latencyElement}`;
+                $(".kws_top_bar").html(innerHTML);
+                if (this.baselinePower == undefined) {
+                    this.baselinePower = GAME.char_data.moc;
+                }
+                if (this.baselineLevel == undefined) {
+                    this.baselineLevel = GAME.char_data.level;
+                }
+                let calculated_power = GAME.dots(GAME.char_data.moc - this.baselinePower);//(GAME.char_data.moc - this.baselinePower).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                let calculatedPowerReset = `<span class='kws_top_bar_section additional_stats_reset' style='cursor:pointer;color:"white"'>RESET</span>`;
+                let futureStats = this.prepareFutureStatsData();
+                let calculated_levels = GAME.dots(GAME.char_data.level - this.baselineLevel);
+                $(".kws_additional_top_bar").html(` <span class='kws_additional_top_bar_section pvm_power' style='cursor:pointer;'>ZDOBYTA MOC: <span style="color:lime;">${calculated_power}</span></span> <span class='kws_additional_top_bar_section future_stats' style='cursor:pointer;'>${futureStats}</span><span class='kws_additional_top_bar_section lvlsGained' style='cursor:pointer;'>ZDOBYTE LVL: <span>${calculated_levels}</span></span><span class='kws_additional_top_bar_section psk' style='cursor:pointer;'>PSK: ${GAME.dots(GAME.char_data.minor_ball)}</span> ${calculatedPowerReset}`);
                 this.adjustCurrentCharacterId();
+                this.checkTournamentsSigning();
             }
             collectActivities() {
                 let received = $("#act_prizes").find("div.act_prize.disabled").length;
@@ -1095,13 +838,8 @@ loadRiddles(cb) {
                     }
                 });
             }
-                                    safeLastmapBack() {
-                if (GAME.fast_locations.includes(GAME.char_data.loc)) {
-                    return GAME.socket.emit('ga', {a:16});
-                }
-                GAME.ask_confirm(19,{a:16});
-            };
-
+            
+            
             wojny2() {
                 var aimp = $("#e_admiral_player").find("[data-option=show_player]").attr("data-char_id");
                 var imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -1219,20 +957,6 @@ loadRiddles(cb) {
                     });
                 }, 500);
             }
-            open_instance() {
-                if ($("[id=instance_list]").is(':hidden')){
-                    GAME.page_switch('game_instances');
-                }
-                if (GAME.current_instance) {
-                    GAME.socket.emit('ga', {a: 29, type: 1, instance: GAME.current_instance });
-                }
-            }
-			safeLastmapBack() {
-                if (GAME.fast_locations.includes(GAME.char_data.loc)) {
-                    return GAME.socket.emit('ga', {a:16});
-                }
-                GAME.ask_confirm(19,{a:16});
-            };
             questProceed() {
                 if (JQS.qcc.is(":visible")) {
                     if ($("button[data-option=finish_quest]").length === 1) {
@@ -1243,9 +967,7 @@ loadRiddles(cb) {
                             button: 1,
                             id: qb_id
                         });
-                        return true
-                    }
-                    if ($("button[data-option=quest_riddle]").is(":visible")) {
+                    } else if ($("button[data-option=quest_riddle]").is(":visible")) {
                         let qb_id = $("button[data-option=quest_riddle]").attr("data-qid");
                         GAME.socket.emit('ga', {
                             a: 22,
@@ -1253,21 +975,14 @@ loadRiddles(cb) {
                             id: qb_id,
                             ans: $('#quest_riddle').val()
                         });
-                        return true
-                    }
-                    if ($("button[data-option=quest_duel]").is(":visible")) {
+                    } else if ($("button[data-option=quest_duel]").is(":visible")) {
                         let fb_id = $("button[data-option=quest_duel]").attr("data-qid");
                         GAME.socket.emit('ga', {
                             a: 22,
                             type: 6,
                             id: fb_id
                         });
-                        setTimeout(() => {
-                            $('#fight_view').fadeOut();
-                        }, 500);
-                        return true
-                    }
-                    if ($(".quest_win .sekcja").text().toLowerCase() === "nuda" && $("button[data-option=finish_quest]").length === 3) {
+                    } else if ($(".quest_win .sekcja").text().toLowerCase() === "nuda" && $("button[data-option=finish_quest]").length === 3) {
                         let qb_id = $("button[data-option=finish_quest]").attr("data-qb_id");
                         GAME.socket.emit('ga', {
                             a: 22,
@@ -1275,9 +990,7 @@ loadRiddles(cb) {
                             button: 2,
                             id: qb_id
                         });
-                        return true
-                    }
-                    if ($(".quest_win .sekcja").text().toLowerCase().startsWith("zadanie substancji") && $("button[data-option=finish_quest]").length === 3) {
+                    } else if ($(".quest_win .sekcja").text().toLowerCase() === "zadanie substancji" && $("button[data-option=finish_quest]").length === 3) {
                         let qb_id = $("button[data-option=finish_quest]").attr("data-qb_id");
                         GAME.socket.emit('ga', {
                             a: 22,
@@ -1285,9 +998,7 @@ loadRiddles(cb) {
                             button: 3,
                             id: qb_id
                         });
-                        return true
-                    }
-                    if ($("button[data-option=finish_quest]").length === 2 && $("button[data-option=finish_quest]").eq(1).html() === "Mam dość tej studni") {
+                    } else if ($("button[data-option=finish_quest]").length === 2 && $("button[data-option=finish_quest]").eq(1).html() === "Mam dość tej studni") {
                         let qb_id = $("button[data-option=finish_quest]").eq(1).attr("data-qb_id");
                         GAME.socket.emit('ga', {
                             a: 22,
@@ -1295,30 +1006,26 @@ loadRiddles(cb) {
                             button: 2,
                             id: qb_id
                         });
-                        return true
-                    }
-                    if ($("#field_opts_con .sekcja").html() == "Zasoby") {
+                    } else if ($("#field_opts_con .sekcja").html() == "Zasoby") {
                         let qb_id = $("#field_opts_con .field_option").find("[data-option=start_mine]").attr("data-mid");
                         GAME.socket.emit('ga', {
                             a: 22,
                             type: 8,
                             mid: qb_id
                         });
-                        return true
                     }
-                    if ($(".quest_action").is(":visible")) {
-                        return GAME.questAction() 
-                    }
-                }
-                if ($("button[data-option=start_mine]").length >= 1) {
+                    setTimeout(() => {
+                        $('#fight_view').fadeOut();
+                    }, 500);
+                    kom_clear();
+                } else if ($("button[data-option=start_mine]").length >= 1) {
                     let mineID = parseInt($("button[data-option=start_mine]").attr("data-mid"));
                     GAME.socket.emit('ga', {
                         a: 22,
                         type: 8,
                         mid: mineID
                     });
-                } 
-                return false
+                }
             }
             pvpKill() {
                 if (!JQS.chm.is(":focus")) {
@@ -1332,7 +1039,7 @@ loadRiddles(cb) {
                         opponents.eq(0).click();
                         setTimeout(() => {
                             this.pvpKill();
-                        }, 126);
+                        }, 110);
                     }
                 }
             }
@@ -1375,40 +1082,12 @@ loadRiddles(cb) {
                     return false;
                 }
             }
-            positionTooltip(e) {
-                const $tooltip = $('#kws_spawn');
-                const $button = $(e.currentTarget);
-            
-                $tooltip.css({ visibility: 'hidden', display: 'block' });
-            
-                const btnOffset = $button.offset();
-                const btnWidth = $button.outerWidth();
-                const tooltipWidth = $tooltip.outerWidth();
-            
-                let left = btnOffset.left - tooltipWidth - 10;
-                
-                let top = btnOffset.top; 
-            
-                if (left < 0) {
-                    left = btnOffset.left + btnWidth + 10;
-                }
-            
-                const scrollTop = $(window).scrollTop();
-                if (top < scrollTop) top = scrollTop + 10;
-            
-                $tooltip.css({
-                    left: left + 'px',
-                    top: top + 'px',
-                    visibility: 'visible',
-                    display: 'none'
-                });
-            }
             spawnList() {
                 let mob = "";
                 for (var i = 0; i < 6; i++) {
-                    mob += `<div class="spawn_row"><div class="newCheckbox"><input id="kws_spawner_ignore_${i}" type="checkbox" class="kws_spawner_check" name="ignoreMobs" value="${i}" ${(GAME.spawner && GAME.spawner[1][i] ? '' : 'checked')} /><label for="kws_spawner_ignore_${i}"></label></div>${LNG.lab457}&nbsp;<b>${LNG['mob_rank' + i]}</b></div>`;
+                    mob += `<div class="spawn_row"><div class="newCheckbox"><input id="kws_spawner_ignore_${i}" type="checkbox" class="kws_spawner_check" name="ignoreMobs" value="${i}" ${(GAME.spawner && GAME.spawner[1][i] ? 'checked' : '')} /><label for="kws_spawner_ignore_${i}"></label></div>${LNG.lab457}&nbsp;<b>${LNG['mob_rank' + i]}</b></div>`;
                 }
-                mob += `<div class="spawn_row" style="flex-direction: column;align-items: center;"><div>Użyte PA na spawn</div><div class="game_input small"><input id="kws_pa_max" name="usePaToSpawn" type="text" value="${GAME.spawner[0]}"></div></div>`;
+                mob += `<div class="spawn_row" style="flex-direction: column;align-items: center;"><div>Użyte PA na spawn</div><div class="game_input small"><input id="kws_pa_max" name="usePaToSpawn" type="text" value="1000"></div></div>`;
                 return mob;
             }
             updatePaToSpawn(pats) {
@@ -1529,12 +1208,14 @@ loadRiddles(cb) {
                 $("body").on("click", '.mborn', () => {
                     knowStatus = true;
                     GAME.socket.emit('ga',{a:9,type:3,nid:382});
-                    mbornInterval = setInterval(wiedza_M, 1000);
+                    mbornInterval = setInterval(wiedza_M, 60000);
                     function wiedza_M(){
                         if(knowStatus) {
-                            if (GAME.char_tables.timed_actions[0] == undefined ) {
+                            if (GAME.char_tables.timed_actions[0] == undefined || GAME.char_tables.timed_actions[1] == undefined && GAME.char_data.bonus16 > GAME.getTime()) {
                                 GAME.socket.emit('ga', {a: 9, type: 3, nid:382});
                                 kom_clear();
+                            } else{
+                                console.log("Yasoen: wiedza trwa.")
                             }
                         }
                     }
@@ -1639,22 +1320,40 @@ loadRiddles(cb) {
                 $("body").on("click", `.kws_top_bar_section.trader_info`, () => {
                     GAME.page_switch('game_events');
                 });
-                $("body").on("click", ".sc_btn", function() {
-                    const classList = $(this).attr('class');
-                    const match = classList.match(/soul_cards_(\d+)/);
-                    
-                    if (match) {
-                        const setIndex = parseInt(match[1]) - 1;
-                        
-                        GAME.socket.emit('ga', {
-                            a: 58,
-                            type: 7,
-                            set: setIndex
-                        });
-                        
-                        $(this).css('opacity', '0.5');
-                        setTimeout(() => $(this).css('opacity', '1'), 100);
-                    }
+                $("body").on("click", `.kws_top_bar_section.soul_cards_one`, () => {
+                    GAME.socket.emit('ga', {
+                        a: 58,
+                        type: 7,
+                        set: 0
+                    });
+                });
+                $("body").on("click", `.kws_top_bar_section.soul_cards_two`, () => {
+                    GAME.socket.emit('ga', {
+                        a: 58,
+                        type: 7,
+                        set: 1
+                    });
+                });
+                $("body").on("click", `.kws_top_bar_section.soul_cards_three`, () => {
+                    GAME.socket.emit('ga', {
+                        a: 58,
+                        type: 7,
+                        set: 2
+                    });
+                });
+                $("body").on("click", `.kws_top_bar_section.soul_cards_four`, () => {
+                    GAME.socket.emit('ga', {
+                        a: 58,
+                        type: 7,
+                        set: 3
+                    });
+                });
+                $("body").on("click", `.kws_top_bar_section.soul_cards_five`, () => {
+                    GAME.socket.emit('ga', {
+                        a: 58,
+                        type: 7,
+                        set: 4
+                    });
                 });
                 $("body").on("click", `.kws_top_bar_section.additional_stats`, () => {
                     this.handleAdditionalTopBarVisibility();
@@ -1825,57 +1524,27 @@ loadRiddles(cb) {
                 $("body").on("click", `[data-option="map_alternative_pilot"]`, () => {
                     this.createAlternativePilot();
                 });
-                GAME.executeIx_o = GAME.executeIx
-                GAME.questProceed = this.questProceed
-                GAME.executeIx = function () {
-                    if (!GAME.questProceed()) {
-                        return GAME.executeIx_o();
-                    }
-                };
- $(document).keydown((event) => {
+                $(document).keydown((event) => {
                     if (!$("input, textarea").is(":focus")) {
                         if (event.key === "x" || event.key === "X") {
                             this.questProceed();
                             kom_clear();
                         } else if (event.key === "b" || event.key === "B") {
                             this.pvpKill();
-                        } else if (event.key === "`" ) {
-                            this.open_instance();
                         } else if (event.key === "n" || event.key === "N") {
                             this.useCompressor();
                         } else if (event.key === "2") {
-                            if (GAME.char_data.last_map) {
-                                this.safeLastmapBack();
-                            } else {
-                                // teleport private planet
-                                GAME.socket.emit('ga', {
-                                    a: 15,
-                                    type: 13
-                                });
-                            }
+                            GAME.socket.emit('ga', {
+                                a: 15,
+                                type: 13
+                            });
                         } else if (event.key === "3") {
-                            if (GAME.char_data.last_map) {
-                                this.safeLastmapBack();
-                            } else {
-                                // teleport clan planet
-                                GAME.socket.emit('ga', {
-                                    a: 39,
-                                    type: 32
-                                });
-                            }
+                            GAME.socket.emit('ga', {
+                                a: 39,
+                                type: 32
+                            });
                         } else if (event.key === "4") {
-                            if (GAME.char_data.last_map) {
-                                this.safeLastmapBack();
-                            } else {
-                                // teleport to character empire
-                                if (GAME.char_data.empire) {
-                                    GAME.socket.emit('ga', {
-                                        a: 50,
-                                        type: 5,
-                                        e: GAME.char_data.empire
-                                    });
-                                }
-                            }
+                            this.bless();
                         } else if (event.key === "5") {
                             setTimeout(() => {
                                 GAME.socket.emit('ga', {
@@ -1911,21 +1580,19 @@ loadRiddles(cb) {
                                     set: set
                                 });
                             }
-                        } else if (event.key === "9") {
-                            this.bless();
                         } else if (event.key === "=") {
                             this.createAlternativePilot();
-                        } else if (event.key === "Tab" && event.shiftKey) {
-                            this.switchCharacter('prev')
-                        } else if (event.key === "Tab") {
-                            this.switchCharacter('next')
-                        }
+                        } else if (event.key === ",") {
+                            this.goToPreviousChar();
+                        } else if (event.key === ".") {
+                            this.goToNextChar();
+                        } else if (event.key === "9" && JQS.qcc.is(":visible")) { }
                     }
                 });
                 $("body").on("click", ".qlink.load_afo", () => {
                     if (typeof this.afo_is_loaded == 'undefined') {
                         this.afo_is_loaded = true;
-                        $.get(gitUrl + "/main/uncodedeeee.js", (data) => {
+                        $.get("https://raw.githubusercontent.com/KWSforAll/KWSforAll/mains/uncodedeeee.js", (data) => {
                             $("body").append(`<script>${data}<\/script>`);
                         }).fail(() => {
                             GAME.komunikat("Wystąpił błąd w ładowaniu skryptu, odśwież stronę i spróbuj ponownie!");
@@ -1943,49 +1610,23 @@ loadRiddles(cb) {
                         e: emp
                     });
                 });
-                const $kwsSpawnTooltip = $('#kws_spawn');
-                
-                let overButton = false;
-                let overTooltip = false;
-                
-                $(document).on('mouseenter', 'button.option.ls.spawner[data-option="mob_spawner"]', (e) => {
-                    overButton = true;
-                    
-                    this.positionTooltip(e);
-                    $kwsSpawnTooltip.stop(true, true).fadeIn(150);
+                $("#kws_spawn").draggable({
+                    handle: ".sekcja"
                 });
-                
-                $(document).on('mouseleave', 'button.option.ls.spawner[data-option="mob_spawner"]', () => {
-                    overButton = false;
-                    tryHide();
+                $('.spawn_switch').on('click', function () {
+                    $("#kws_spawn2").toggle();
                 });
-                
-                $kwsSpawnTooltip.on('mouseenter', function () {
-                    overTooltip = true;
-                });
-                
-                $kwsSpawnTooltip.on('mouseleave', function () {
-                    overTooltip = false;
-                    tryHide();
-                });
-                
-                function tryHide() {
-                    setTimeout(() => {
-                        if (!overButton && !overTooltip) {
-                            $kwsSpawnTooltip.fadeOut(150);
-                        }
-                    }, 100);
-                }
                 $("#kws_spawn input[type=checkbox], input[type=text]").change((chb) => {
                     switch ($(chb.target).attr("name")) {
                         case "ignoreMobs":
-                            GAME.spawner[1] = $('#kws_spawn input[name="ignoreMobs"]').map((i, el) => el.checked ? 0 : 1).get();
+                            GAME.spawner[1] = $('#kws_spawn input[name="ignoreMobs"]').map((index, element) => {
+                                return element.checked ? 1 : 0;
+                            }).get();
                             break;
                         case "usePaToSpawn":
                             this.updatePaToSpawn($(chb.target).val());
                             break;
                     }
-                    localStorage.setItem('kws_spawner', JSON.stringify(GAME.spawner));
                 });
                 $("#secondary_char_stats").append(` <div class="instance" data-toggle="tooltip" data-original-title="<div class=tt>Instancje <br /><span class=&quot;red&quot;><b>Kliknij by wykonać instancje</b></span></div>" class=""><i class="ico a11"></i> <span> <ul><ul/></span></div> <div class="activities" data-toggle="tooltip" data-original-title="<div class=tt>Aktywności <br /><span class=&quot;red&quot;><b>Kliknij by odebrać aktywności</b></span></div>" class=""><i class="ico a12"></i> <span> <ul><ul/></span></div>`);
                 $("body").on('change', '.autoExpeCodes input[type=checkbox]', (el) => {
@@ -2232,8 +1873,10 @@ loadRiddles(cb) {
                 }
 
                 if (kwsLocInfo) {
-                    kwsLocInfo.style.left = '-35px';
-                    kwsLocInfo.style.top = '1030px';
+                   // kwsLocInfo.style.left = '-235px';
+                   // kwsLocInfo.style.top = '860px';
+		  kwsLocInfo.style.left = '-35px';
+		  kwsLocInfo.style.top = '1030px';                   
                 }
 
                 $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
@@ -2628,13 +2271,11 @@ loadRiddles(cb) {
             pvp_count = 0;
             setTimeout(() => {
                 if ((GAME.char_data.reborn == 4 || GAME.char_data.reborn == 5) && GAME.char_data.alt_transform_expiry < GAME.getTime()) {
-/*               
-			   GAME.socket.emit('ga', {
+                    GAME.socket.emit('ga', {
                         a: 18,
                         type: 8,
                         tech_id: 134
                     });
-					*/
                 }
             }, 5300);
         }
@@ -2673,10 +2314,10 @@ loadRiddles(cb) {
                 if (GAME.char_data.klan_rent == 0) {
                     opts += `<div class="qlink get_titles_list" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/0eQCqBl.png');" data-toggle="tooltip" data-original-title="<div class=tt>Zmień tytuł</div>"></div>`;
                 }
-                opts += `<div class="qlink load_afo" style="background-image: url('https://up.be3.ovh/upload/1784028453.png');" data-toggle="tooltip" data-original-title="<div class=tt>Załaduj KWB</div>"></div>`;
-                opts += `<div class="qlink sideIcons manage_auto_abyss${kws.auto_abyss ? ' kws_active_icon' : ''}" style="background-image: url('https://up.be3.ovh/upload/1784029876.png');display:block;top:-136px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie Otchłani</div>"></div>`;
-                opts += `<div class="qlink sideIcons manage_auto_arena${kws.auto_arena ? ' kws_active_icon' : ''}" style="background-image: url('https://up.be3.ovh/upload/1784031372.png');display:block;top:-104px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie na Arenie</div>"></div>`;
-                opts += `<div class="qlink sideIcons manage_autoExpeditions${kws.autoExpeditions ? ' kws_active_icon' : ''}" style="background-image: url('https://up.be3.ovh/upload/1784029312.jpeg');display:block;top:-72px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Automatyczne Wyprawy</div>"></div>`;
+                opts += `<div class="qlink load_afo" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/P8sJgQz.png');" data-toggle="tooltip" data-original-title="<div class=tt>Załaduj AFO</div>"></div>`;
+                opts += `<div class="qlink sideIcons manage_auto_abyss${kws.auto_abyss ? ' kws_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/j5eQv2B.png');display:block;top:-136px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie Otchłani</div>"></div>`;
+                opts += `<div class="qlink sideIcons manage_auto_arena${kws.auto_arena ? ' kws_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/rAroNzD.png');display:block;top:-104px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie na Arenie</div>"></div>`;
+                opts += `<div class="qlink sideIcons manage_autoExpeditions${kws.autoExpeditions ? ' kws_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/uSMzLBb.png');display:block;top:-72px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Automatyczne Wyprawy</div>"></div>`;
                 opts += ` <div class="autoExpeCodes"> <div style="padding-left:8px;"> <label for="aeCodes" style="cursor:pointer;">KODY</label> <div class="newCheckbox"><input type="checkbox" id="aeCodes" name="aeCodes" ${kws.settings.aeCodes ? "checked" : ""} /><label for="aeCodes"></label></div> </div> </div>`;
             }
             $('#quick_bar').html(opts);
@@ -2771,12 +2412,10 @@ loadRiddles(cb) {
                     id: GAME.quest_action_qid,
                     cnt: GAME.quest_action_max
                 });
-                return true
             }
             setTimeout(() => {
                 kws.markDaily();
             }, 100);
-            return false
         }
         GAME.parseQuest = function (res) {
             var quest = res.q_step;
@@ -2915,9 +2554,17 @@ loadRiddles(cb) {
                 }
             } else this.endQuest(quest_move.qb_id);
         };
-        GAME.parseLocBons_o = GAME.parseLocBons;
+	GAME.parseLocBons_o = GAME.parseLocBons;
         GAME.parseLocBons = function (loc_data) {
             kws.parseMapInfo(GAME.map_quests, "GAME.parseLocBons");
+            //var bons = '';
+            //if (loc_data.bonus_tren) bons += '<img src="/gfx/icons/loc_bon/tren.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_tren + '</b>' + LNG.item_stat15 + '</div>" />';
+            //if (loc_data.bonus_exp) bons += '<img src="/gfx/icons/loc_bon/exp.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_exp + '</b>' + LNG.item_stat16 + '</div>" />';
+            //if (loc_data.bonus_mocc) bons += '<img src="/gfx/icons/loc_bon/mc.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_mocc + '</b>' + LNG.item_stat53 + '</div>" />';
+            //if (loc_data.bonus_mocv) bons += '<img src="/gfx/icons/loc_bon/mv.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_mocv + '</b>' + LNG.item_stat54 + '</div>" />';
+            //if (loc_data.bonus_legend) bons += '<img src="/gfx/icons/loc_bon/l.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_legend + '</b>' + LNG.item_stat74 + '</div>" />';
+            //if (loc_data.bonus_psk) bons += '<img src="/gfx/icons/loc_bon/p.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_psk + '</b>' + LNG.item_stat67 + '</div>" />';
+            //if (loc_data.bonus_senzu) bons += '<img src="/gfx/icons/loc_bon/s.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_senzu + '</b>' + LNG.item_stat78 + '</div>" />';
             return GAME.parseLocBons_o(loc_data); //bons;
         };
         GAME.emit = function (order, data, force) {
@@ -2954,5 +2601,6 @@ loadRiddles(cb) {
         let roll1 = false;
         let roll3 = false;
         let version = '3.7.4';
-    })
+    }
+    )
 }
